@@ -1,0 +1,10 @@
+.env
+.venv/
+.venv-virtuals/
+.git/
+tests/
+.pytest_cache/
+**/__pycache__/
+*.py[cod]
+.relay-memory.db
+memory.db

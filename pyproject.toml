@@ -1,0 +1,33 @@
+[project]
+name = "sibyl-relay"
+version = "0.1.0"
+description = "A memory-backed coordinator for autonomous agents"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = []
+
+[project.optional-dependencies]
+sibyl = ["sibyl-memory-client"]
+base = ["web3>=6", "python-dotenv>=1.0"]
+server = ["fastapi>=0.110", "uvicorn[standard]>=0.29", "web3>=6", "python-dotenv>=1.0"]
+virtuals = ["virtuals-acp"]
+dev = ["pytest>=8.0", "web3>=6", "fastapi>=0.110", "httpx>=0.27", "python-dotenv>=1.0"]
+
+[project.scripts]
+sibyl-relay = "sibyl_relay.cli:main"
+sibyl-relay-server = "sibyl_relay.api:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+sibyl_relay = ["web/*.html"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

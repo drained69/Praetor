@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sibyl Relay</title>
+<style>
+  :root {
+    --bg: #0b0e14; --panel: #141925; --panel2: #1b2233; --line: #26304a;
+    --ink: #e8edf7; --muted: #8b98b5; --acc: #6ea8fe; --good: #4ade80;
+    --bad: #f87171; --warn: #fbbf24; --chip: #202a41;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  a { color: var(--acc); }
+  header { padding: 22px 28px; border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  header h1 { font-size: 18px; margin: 0; letter-spacing: .2px; }
+  header .sub { color: var(--muted); font-size: 13px; }
+  .badges { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+  .badge { background: var(--chip); border: 1px solid var(--line); border-radius: 999px;
+    padding: 5px 12px; font-size: 12px; color: var(--muted); }
+  .badge b { color: var(--ink); }
+  .badge.on { border-color: #2c6b46; color: var(--good); }
+  .badge.off { border-color: #5b2b2b; color: var(--bad); }
+  main { max-width: 1180px; margin: 0 auto; padding: 24px 20px 60px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+    padding: 18px 20px; }
+  .card.wide { grid-column: 1 / -1; }
+  .card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .8px;
+    color: var(--muted); margin: 0 0 14px; }
+  label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 4px; }
+  input[type=text], input[type=number], select { width: 100%; background: var(--panel2);
+    border: 1px solid var(--line); color: var(--ink); border-radius: 8px; padding: 9px 11px; }
+  .row { display: flex; gap: 12px; }
+  .row > div { flex: 1; }
+  .check { display: flex; align-items: center; gap: 8px; margin-top: 14px; color: var(--muted); }
+  button { background: var(--acc); color: #071018; border: 0; border-radius: 9px;
+    padding: 11px 18px; font-weight: 650; cursor: pointer; margin-top: 16px; font-size: 14px; }
+  button.ghost { background: transparent; color: var(--acc); border: 1px solid var(--line); }
+  button:disabled { opacity: .5; cursor: default; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 9px 8px; border-bottom: 1px solid var(--line); font-size: 13px; }
+  th { color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; }
+  .pill { font-size: 11px; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line); }
+  .pill.rev { color: var(--warn); border-color: #6b551f; }
+  .pill.ok { color: var(--good); border-color: #2c6b46; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; word-break: break-all; }
+  .kv { display: grid; grid-template-columns: 130px 1fr; gap: 6px 12px; font-size: 13px; }
+  .kv .k { color: var(--muted); }
+  .result { margin-top: 16px; padding: 14px; border-radius: 10px; background: var(--panel2);
+    border: 1px solid var(--line); display: none; }
+  .result.show { display: block; }
+  .tag { display: inline-block; font-size: 11px; padding: 2px 9px; border-radius: 999px; margin-right: 6px; }
+  .tag.good { background: #14331f; color: var(--good); }
+  .tag.bad { background: #331717; color: var(--bad); }
+  .muted { color: var(--muted); }
+  .note { font-size: 12px; color: var(--muted); margin-top: 8px; }
+  footer { text-align: center; color: var(--muted); font-size: 12px; padding: 20px; }
+  @media (max-width: 820px) { main { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Sibyl Relay</h1>
+    <div class="sub">Memory-backed coordination for autonomous agents</div>
+  </div>
+  <div class="badges" id="badges"></div>
+</header>
+
+<main>
+  <section class="card">
+    <h2>Submit a job</h2>
+    <label>Task</label>
+    <input type="text" id="task" value="Review a Base lending protocol" />
+    <div class="row">
+      <div>
+        <label>Category</label>
+        <select id="category"><option value="risk">risk</option></select>
+      </div>
+      <div>
+        <label>Value (USDC)</label>
+        <input type="number" id="value" value="1.0" step="0.5" min="0" />
+      </div>
+    </div>
+    <label class="check"><input type="checkbox" id="fail" /> Inject a worker failure (to seed memory)</label>
+    <button id="run">Route &amp; run job</button>
+    <div class="result" id="result"></div>
+    <p class="note">Routing reconstructs each worker's reputation from Sibyl Memory before deciding.
+      Inject a failure once, then run again clean — the coordinator avoids the flagged worker.</p>
+  </section>
+
+  <section class="card">
+    <h2>Partner stacks</h2>
+    <div class="kv" id="stacks"></div>
+    <h2 style="margin-top:20px">Deletion test</h2>
+    <p class="muted" style="font-size:13px;margin:0 0 6px">The hackathon memory gate: delete memory, does routing still change?</p>
+    <button class="ghost" id="del">Run deletion test</button>
+    <div class="result" id="delresult"></div>
+  </section>
+
+  <section class="card wide">
+    <h2>Worker reputation <span class="muted" style="text-transform:none;letter-spacing:0">— reconstructed from memory</span></h2>
+    <table>
+      <thead><tr><th>Worker</th><th>Capabilities</th><th>Reliability</th><th>Successes</th><th>Failures</th><th>Status</th><th>Last failure note</th></tr></thead>
+      <tbody id="workers"></tbody>
+    </table>
+  </section>
+</main>
+
+<footer>Sibyl Memory (mandatory) · Base + Virtuals partner stacks · <span id="mb"></span></footer>
+
+<script>
+const $ = (id) => document.getElementById(id);
+async function jget(u){ return (await fetch(u)).json(); }
+async function jpost(u, b){ return (await fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b||{})})).json(); }
+
+function stackBadge(name, s){
+  const on = s && s.configured;
+  const live = on && (s.can_broadcast || s.chain_id);
+  const cls = on ? 'on' : 'off';
+  const label = on ? (name==='Base' ? (s.can_broadcast?'live':'dry-run') : 'live') : 'not configured';
+  return `<span class="badge ${cls}"><b>${name}</b> · ${label}</span>`;
+}
+
+function renderWorkers(list){
+  $('workers').innerHTML = list.map(w => `
+    <tr>
+      <td><b>${w.name}</b></td>
+      <td class="muted">${w.capabilities.join(', ')}</td>
+      <td>${(w.reliability*100).toFixed(0)}%</td>
+      <td>${w.successes}</td>
+      <td>${w.failures}</td>
+      <td>${w.requires_review ? '<span class="pill rev">review</span>' : '<span class="pill ok">trusted</span>'}</td>
+      <td class="muted">${(w.failure_notes.slice(-1)[0]||'—')}</td>
+    </tr>`).join('');
+}
+
+async function refresh(){
+  const h = await jget('/api/health');
+  const bs = h.builder_score || {verified_partner_stacks: 0, multiplier: 1.0};
+  $('badges').innerHTML =
+    `<span class="badge"><b>Memory</b> · ${h.memory_backend}</span>` +
+    stackBadge('Base', h.base) + stackBadge('Virtuals', h.virtuals) +
+    `<span class="badge"><b>${bs.verified_partner_stacks}</b>/2 verified · x${bs.multiplier.toFixed(2)}</span>`;
+  $('mb').textContent = 'memory: ' + h.memory_backend;
+  const stacks = [];
+  const b = h.base || {};
+  stacks.push(['Base', b.configured ? `chain ${b.chain_id} · block ${b.block_number} · ${b.usdc_symbol||'USDC'} ${b.can_broadcast?'· can broadcast':'· dry-run'}` : (b.error||'not configured')]);
+  const v = h.virtuals || {};
+  stacks.push(['Virtuals', v.configured ? `agent ${v.agent_wallet} · chain ${v.chain_id}` : (v.error||'not configured')]);
+  $('stacks').innerHTML = stacks.map(([k,val])=>`<div class="k">${k}</div><div class="mono">${val}</div>`).join('');
+  const s = await jget('/api/state');
+  renderWorkers(s.workers);
+}
+
+function ref(label, value, base){
+  if(!value) return '';
+  let link = value;
+  if(base && base.explorer && !value.startsWith('dryrun:') && value.startsWith('0x'))
+    link = `<a href="${base.explorer}/tx/${value}" target="_blank">${value}</a>`;
+  return `<div class="k">${label}</div><div class="mono">${link}</div>`;
+}
+
+$('run').onclick = async () => {
+  $('run').disabled = true;
+  const out = await jpost('/api/jobs', {
+    task: $('task').value, category: $('category').value,
+    value_usdc: parseFloat($('value').value)||0, force_failure: $('fail').checked
+  });
+  $('run').disabled = false;
+  if(out.detail){ $('result').className='result show'; $('result').innerHTML = `<span class="tag bad">error</span> ${out.detail}`; return; }
+  const okTag = out.success ? '<span class="tag good">success</span>' : '<span class="tag bad">failed</span>';
+  const vTag = out.verified ? '<span class="tag good">verified</span>' : '<span class="tag bad">unverified</span>';
+  $('result').className = 'result show';
+  $('result').innerHTML = `${okTag}${vTag}
+    <div class="kv" style="margin-top:10px">
+      <div class="k">Routed to</div><div><b>${out.routed_to}</b></div>
+      ${out.reason?`<div class="k">Reason</div><div class="muted">${out.reason}</div>`:''}
+      ${ref('ACP job', out.acp_reference)}
+      ${ref('Base payment', out.payment_reference, (await jget('/api/health')).base)}
+    </div>`;
+  renderWorkers(out.workers);
+};
+
+$('del').onclick = async () => {
+  const d = await jpost('/api/deletion-test');
+  $('delresult').className = 'result show';
+  $('delresult').innerHTML = `
+    <div class="kv">
+      <div class="k">With memory</div><div><b>${d.with_memory_selected}</b></div>
+      <div class="k">Without memory</div><div><b>${d.without_memory_selected}</b></div>
+      <div class="k">Load-bearing</div><div>${d.load_bearing?'<span class="tag good">yes</span>':'<span class="tag bad">no</span>'}</div>
+    </div>
+    <p class="note">${d.explanation}</p>`;
+};
+
+refresh();
+</script>
+</body>
+</html>

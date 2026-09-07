@@ -1,0 +1,16 @@
+.venv/
+.venv-virtuals/
+.env
+.git/
+.gitignore
+tests/
+.pytest_cache/
+**/__pycache__/
+*.py[cod]
+*.egg-info/
+.relay-memory.db
+memory.db
+*.md
+!README.md
+Dockerfile
+.dockerignore
