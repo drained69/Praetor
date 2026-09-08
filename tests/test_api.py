@@ -129,6 +129,12 @@ def test_health_reveals_operator_signals(operator_client):
     assert op["admin_token_required"] is True
 
 
+def test_auth_status_validates_operator_token(operator_client):
+    assert operator_client.get("/api/auth").status_code == 401
+    assert operator_client.get("/api/auth", headers={"X-Admin-Token": "wrong"}).status_code == 401
+    assert operator_client.get("/api/auth", headers=_hdr()).json() == {"authenticated": True}
+
+
 def test_admin_token_required_on_write_endpoints(operator_client):
     # Missing token → 401
     r = operator_client.post("/api/workers", json={"name": "n", "capabilities": ["risk"]})

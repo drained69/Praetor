@@ -35,6 +35,7 @@
   .banner.warn{background:rgba(255,138,91,.08); border-color:rgba(255,138,91,.35); color:var(--danger)}
   .banner.danger{background:rgba(255,107,107,.09); border-color:rgba(255,107,107,.45); color:var(--red)}
   .banner b{color:var(--ink)}
+  .auth-error{color:var(--red); font-size:12px}
 
   /* top bar */
   .topbar{display:flex; align-items:center; gap:18px; flex-wrap:wrap;
@@ -198,6 +199,7 @@
     .row{flex-direction:column; gap:0}
     .banner{padding:12px 16px}
     .banner input{width:min(100%, 280px) !important}
+    #mem-body{grid-template-columns:1fr !important}
   }
 </style>
 </head>
@@ -321,10 +323,10 @@
 
 <script>
 const $ = (id) => document.getElementById(id);
-async function jget(u){
+async function jget(u, options){
   let r;
   try {
-    r = await fetch(u);
+    r = await fetch(u, options);
   } catch (e) {
     throw new Error('Praetor is unreachable. Check that the server is running.');
   }
@@ -333,8 +335,47 @@ async function jget(u){
   return j;
 }
 
-let ADMIN_TOKEN = localStorage.getItem('praetor.admin_token') || '';
+// Credentials are session-only; a refresh must return to the locked view.
+let ADMIN_TOKEN = '';
 let LAST_HEALTH = null;
+
+function clearAdminToken(){
+  ADMIN_TOKEN = '';
+  if(LAST_HEALTH) renderBanners(LAST_HEALTH, false);
+}
+
+async function validateAdminToken(required){
+  if(!required) return true;
+  if(!ADMIN_TOKEN) return false;
+  try {
+    await jget('/api/auth', {headers:{'X-Admin-Token': ADMIN_TOKEN}});
+    return true;
+  } catch (e) {
+    clearAdminToken();
+    return false;
+  }
+}
+
+async function unlockAdmin(){
+  const input = $('tok');
+  const button = $('unlock-btn');
+  const token = input?.value.trim() || '';
+  if(!token) return;
+  button.disabled = true;
+  button.textContent = 'Checking…';
+  try {
+    await jget('/api/auth', {headers:{'X-Admin-Token': token}});
+    ADMIN_TOKEN = token;
+    renderBanners(LAST_HEALTH, true);
+  } catch (e) {
+    input.value = '';
+    input.setAttribute('aria-invalid', 'true');
+    input.focus();
+    button.disabled = false;
+    button.textContent = 'Unlock';
+    if(!document.querySelector('.auth-error')) input.insertAdjacentHTML('afterend', '<span class="auth-error" role="alert">Invalid admin token.</span>');
+  }
+}
 
 function ehtml(s){return String(s ?? '').replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));}
 
@@ -363,7 +404,7 @@ function chip(label, on, mode){
 }
 
 // ============================================================ BANNERS
-function renderBanners(h){
+function renderBanners(h, authenticated){
   const op = h.operator || {};
   const parts = [];
   if(op.mainnet){
@@ -371,12 +412,12 @@ function renderBanners(h){
   }
   if(!op.admin_token_required){
     parts.push(`<div class="banner warn"><b>Admin token is not configured.</b> Any visitor to this URL can register workers and submit jobs. Set <code>PRAETOR_ADMIN_TOKEN</code> before exposing this server to the public.</div>`);
-  } else if(!ADMIN_TOKEN){
+  } else if(!authenticated){
     parts.push(`<div class="banner warn"><b>This server is locked.</b> <span>Registering workers, submitting jobs, and deleting are protected. Enter the admin token the operator configured (<code>PRAETOR_ADMIN_TOKEN</code>) to unlock this browser. It is stored only on this device — viewing stays available without it.</span>
       <input id="tok" type="password" style="width:220px; display:inline-block; padding:6px 10px; background:transparent; color:var(--ink); border:1px solid rgba(255,138,91,.5); border-radius:6px" placeholder="Admin token" />
-      <button class="ghost" onclick="const v=document.getElementById('tok').value.trim(); if(v){localStorage.setItem('praetor.admin_token', v); location.reload();}">Unlock</button></div>`);
+      <button class="ghost" id="unlock-btn" onclick="unlockAdmin()">Unlock</button></div>`);
   } else {
-    parts.push(`<div class="banner warn" style="background:rgba(61,245,160,.06); border-color:rgba(61,245,160,.35); color:var(--green)"><b>Unlocked</b> · admin token active on this device. <button class="ghost" style="padding:5px 10px" onclick="localStorage.removeItem('praetor.admin_token'); location.reload();">Lock again</button></div>`);
+    parts.push(`<div class="banner warn" style="background:rgba(61,245,160,.06); border-color:rgba(61,245,160,.35); color:var(--green)"><b>Unlocked</b> · admin token active on this device. <button class="ghost" style="padding:5px 10px" onclick="clearAdminToken(); location.reload();">Lock again</button></div>`);
   }
   $('banners').innerHTML = parts.join('');
 }
@@ -521,7 +562,8 @@ async function refresh(){
   try {
     const [h, s] = await Promise.all([jget('/api/health'), jget('/api/state')]);
     LAST_HEALTH = h;
-    renderBanners(h);
+    const authenticated = await validateAdminToken(!!h.operator?.admin_token_required);
+    renderBanners(h, authenticated);
     renderEnv(h);
     renderChips(h);
     renderWorkers(s.workers);

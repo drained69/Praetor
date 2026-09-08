@@ -397,6 +397,15 @@ def health() -> dict[str, Any]:
     }
 
 
+@app.get("/api/auth")
+def auth_status(
+    x_admin_token: str | None = Header(default=None, alias="X-Admin-Token"),
+) -> dict[str, bool]:
+    """Validate the operator token without exposing any secret material."""
+    _require_admin(x_admin_token)
+    return {"authenticated": True}
+
+
 @app.get("/api/state")
 def state() -> dict[str, Any]:
     return {"workers": relay.workers()}
