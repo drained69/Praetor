@@ -583,14 +583,14 @@ def reset_seed_workers(
 FAVICON_SVG = (
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">'
     '<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">'
-    '<stop offset="0" stop-color="#7C5CFC"/><stop offset="1" stop-color="#22D3EE"/>'
+    '<stop offset="0" stop-color="#7CFFB2"/><stop offset="1" stop-color="#22D3EE"/>'
     "</linearGradient></defs>"
-    '<rect x="8" y="8" width="184" height="184" rx="46" fill="url(#g)"/>'
-    '<g transform="rotate(-18 100 100)" fill="none" stroke="#fff" stroke-linecap="round">'
+    '<rect x="8" y="8" width="184" height="184" rx="46" fill="#050D09"/>'
+    '<g transform="rotate(-18 100 100)" fill="none" stroke="url(#g)" stroke-linecap="round">'
     '<path d="M60 132 A56 56 0 1 1 150 78" stroke-width="14"/>'
     '<circle cx="100" cy="100" r="25" stroke-width="7"/>'
     "</g>"
-    '<g transform="rotate(-18 100 100)" fill="#fff">'
+    '<g transform="rotate(-18 100 100)" fill="#7CFFB2">'
     '<circle cx="150" cy="78" r="15"/><circle cx="100" cy="100" r="11"/>'
     "</g></svg>"
 )

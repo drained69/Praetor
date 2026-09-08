@@ -1,4 +1,6 @@
 import React from "react";
+import { loadFont as loadDMMono } from "@remotion/google-fonts/DMMono";
+import { loadFont as loadSpaceGrotesk } from "@remotion/google-fonts/SpaceGrotesk";
 import {
   AbsoluteFill,
   Sequence,
@@ -8,25 +10,31 @@ import {
   useVideoConfig,
 } from "remotion";
 
-// ──────────────────────────────────────────────────────────────
-// palette + typography (matches the Praetor dashboard/landing)
-// ──────────────────────────────────────────────────────────────
+const { fontFamily: mono } = loadDMMono("normal", {
+  weights: ["400", "500"],
+  subsets: ["latin"],
+});
+const { fontFamily: display } = loadSpaceGrotesk("normal", {
+  weights: ["400", "500", "600", "700"],
+  subsets: ["latin"],
+});
+
 const C = {
-  bg: "#050d09",
-  panel: "rgba(9,22,16,.82)",
-  panel2: "rgba(9,22,16,.94)",
-  mint: "#3df5a0",
-  bright: "#7cffb2",
-  gold: "#e7b94d",
-  ink: "#d6ece1",
-  muted: "#6f8f80",
-  dim: "#1e6b47",
-  line: "rgba(61,245,160,.22)",
-  line2: "rgba(61,245,160,.11)",
-  red: "#ff6b6b",
+  bg: "#050807",
+  panel: "rgba(10,16,13,.92)",
+  panel2: "#0e1813",
+  mint: "#86ffb4",
+  bright: "#86ffb4",
+  green: "#42dc88",
+  cyan: "#22d3ee",
+  gold: "#e2b65d",
+  ink: "#e8efe8",
+  muted: "#829289",
+  dim: "#365b48",
+  line: "#1d3328",
+  line2: "#173023",
+  red: "#ff7b73",
 };
-const mono = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace";
-const display = "'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif";
 
 // ──────────────────────────────────────────────────────────────
 // shared primitives
@@ -44,25 +52,34 @@ const rise = (frame: number, duration = 22, distance = 30) => ({
   })}px)`,
 });
 
-const Logo: React.FC = () => (
-  <div
-    style={{
-      width: 46,
-      height: 46,
-      border: `2px solid ${C.mint}`,
-      borderRadius: 12,
-      display: "grid",
-      placeItems: "center",
-      color: C.mint,
-      fontSize: 22,
-      fontWeight: 700,
-      transform: "rotate(-8deg)",
-      boxShadow: `0 0 24px ${C.mint}33`,
-      fontFamily: display,
-    }}
+const Logo: React.FC<{ size?: number }> = ({ size = 48 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 200 200"
+    aria-label="Praetor logo"
+    role="img"
+    style={{ flex: "0 0 auto", filter: `drop-shadow(0 0 ${size / 3}px rgba(134,255,180,.18))` }}
   >
-    P
-  </div>
+    <defs>
+      <linearGradient id="praetor-video-logo" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stopColor="#7cffb2" />
+        <stop offset="1" stopColor="#22d3ee" />
+      </linearGradient>
+    </defs>
+    <g transform="rotate(-18 100 100)">
+      <path
+        d="M60 132 A56 56 0 1 1 150 78"
+        fill="none"
+        stroke="url(#praetor-video-logo)"
+        strokeWidth="12"
+        strokeLinecap="round"
+      />
+      <circle cx="150" cy="78" r="13" fill="#7cffb2" />
+      <circle cx="100" cy="100" r="24" fill="none" stroke="#7cffb2" strokeWidth="6" />
+      <circle cx="100" cy="100" r="10" fill="#7cffb2" />
+    </g>
+  </svg>
 );
 
 const Grid: React.FC = () => (
@@ -70,10 +87,10 @@ const Grid: React.FC = () => (
     style={{
       position: "absolute",
       inset: 0,
-      opacity: 0.16,
-      backgroundImage: `linear-gradient(${C.mint}18 1px, transparent 1px), linear-gradient(90deg, ${C.mint}18 1px, transparent 1px)`,
-      backgroundSize: "64px 64px",
-      maskImage: "linear-gradient(to bottom, black, transparent 88%)",
+      opacity: 0.25,
+      backgroundImage: `linear-gradient(rgba(134,255,180,.04) 1px, transparent 1px), linear-gradient(90deg, rgba(134,255,180,.04) 1px, transparent 1px), radial-gradient(900px 500px at 16% 0%, rgba(134,255,180,.12), transparent 65%)`,
+      backgroundSize: "72px 72px, 72px 72px, 100% 100%",
+      maskImage: "linear-gradient(to bottom, black, transparent 92%)",
     }}
   />
 );
@@ -99,8 +116,8 @@ const Header: React.FC<{ section?: string }> = ({ section }) => (
             color: C.ink,
             fontFamily: display,
             fontWeight: 700,
-            fontSize: 24,
-            letterSpacing: 1,
+          fontSize: 23,
+          letterSpacing: ".16em",
           }}
         >
           PRAETOR
@@ -113,13 +130,13 @@ const Header: React.FC<{ section?: string }> = ({ section }) => (
             textTransform: "uppercase",
           }}
         >
-          agent coordination layer
+          memory coordination layer
         </div>
       </div>
     </div>
     <div style={{ color: C.muted, fontSize: 12, letterSpacing: 2 }}>
       {section ?? "PRODUCT DEMO"}{" "}
-      <span style={{ color: C.mint }}>// SIBYL HACKATHON</span>
+      <span style={{ color: C.mint }}>// VERIFIED COORDINATION</span>
     </div>
   </div>
 );
@@ -133,22 +150,11 @@ const Panel: React.FC<{
       position: "relative",
       background: C.panel,
       border: `1px solid ${C.line}`,
-      borderRadius: 8,
-      padding: 28,
+      borderRadius: 0,
+      padding: 29,
       ...style,
     }}
   >
-    <i
-      style={{
-        position: "absolute",
-        top: -1,
-        left: -1,
-        width: 18,
-        height: 18,
-        borderTop: `2px solid ${C.mint}`,
-        borderLeft: `2px solid ${C.mint}`,
-      }}
-    />
     {children}
   </div>
 );
@@ -239,10 +245,10 @@ const Intro: React.FC = () => {
       <Grid />
       <div style={{ transform: `scale(${scale})`, zIndex: 1 }}>
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 30 }}>
-          <Logo />
+          <Logo size={104} />
         </div>
-        <div style={{ fontSize: 104, fontWeight: 700, letterSpacing: -4 }}>
-          PRAETOR
+        <div style={{ fontSize: 104, fontWeight: 500, letterSpacing: "-.055em" }}>
+          PRAETOR<span style={{ color: C.mint }}>.</span>
         </div>
         <div
           style={{
@@ -593,13 +599,13 @@ const Memory: React.FC = () => {
               maxWidth: 560,
             }}
           >
-            Sibyl Memory splits state into two tiers. Warm entities hold each
-            worker's living profile. Cold events record every routing decision as
-            durable history.
+            Sibyl Memory spans five load-bearing tiers. Worker entities, job
+            events, live state, receipts, and search all shape the routing loop.
           </p>
           <div style={{ display: "flex", gap: 14, marginTop: 26 }}>
             <Chip label="WARM" sub="worker entities" />
             <Chip label="COLD" sub="job events" />
+            <Chip label="HOT" sub="live state" />
           </div>
           <div
             style={{
@@ -700,13 +706,13 @@ const Dashboard: React.FC = () => {
             </h2>
           </div>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <Chip label="Memory" sub="sibyl" />
-            <Chip label="Base" sub="chain 8453" />
-            <Chip label="Virtuals" sub="acp-cli" />
+            <Chip label="Memory" on={false} sub="in-memory" />
+            <Chip label="Base" sub="chain 84532" />
+            <Chip label="Virtuals" on={false} sub="off" />
           </div>
         </div>
 
-        {/* Builder Score strip */}
+        {/* Live environment strip, matching the deployed operator console. */}
         <div
           style={{
             display: "flex",
@@ -719,15 +725,15 @@ const Dashboard: React.FC = () => {
             background: C.panel,
           }}
         >
-          <div style={{ fontFamily: display, fontWeight: 700, fontSize: 44, color: C.gold, lineHeight: 1 }}>
-            x1.25
+          <div style={{ fontFamily: display, fontWeight: 700, fontSize: 34, color: C.ink, lineHeight: 1 }}>
+            Sepolia <span style={{ color: C.muted, fontSize: 20 }}>· 84532</span>
           </div>
           <div style={{ fontFamily: mono, fontSize: 14, color: C.muted, lineHeight: 1.6 }}>
-            <b style={{ color: C.ink }}>2/2</b> partner stacks verified<br />
-            Sibyl Memory + Base + Virtuals — real work, no simulation
+            <b style={{ color: C.gold }}>DRY-RUN</b> · gas validation only<br />
+            No signer configured · no transaction broadcast
           </div>
           <div style={{ marginLeft: "auto", color: C.mint, fontFamily: mono, fontSize: 14 }}>
-            <Dot /> SYSTEM ONLINE
+            <Dot /> CONTROL PLANE ONLINE
           </div>
         </div>
 
@@ -742,7 +748,7 @@ const Dashboard: React.FC = () => {
                 marginTop: 8,
                 padding: 16,
                 border: `1px solid ${C.line}`,
-                borderRadius: 5,
+                borderRadius: 10,
                 fontFamily: mono,
                 fontSize: 17,
               }}
@@ -755,7 +761,7 @@ const Dashboard: React.FC = () => {
                   flex: 1,
                   padding: 14,
                   border: `1px solid ${C.line}`,
-                  borderRadius: 5,
+                  borderRadius: 10,
                   fontFamily: mono,
                   color: C.mint,
                 }}
@@ -767,7 +773,7 @@ const Dashboard: React.FC = () => {
                   flex: 1,
                   padding: 14,
                   border: `1px solid ${C.line}`,
-                  borderRadius: 5,
+                  borderRadius: 10,
                   fontFamily: mono,
                 }}
               >
@@ -779,14 +785,15 @@ const Dashboard: React.FC = () => {
                 marginTop: 24,
                 display: "inline-block",
                 padding: "14px 22px",
-                background: C.gold,
-                color: "#0a0f07",
-                fontFamily: mono,
+                background: `linear-gradient(180deg, ${C.bright}, ${C.green})`,
+                color: "#052015",
+                borderRadius: 11,
+                fontFamily: display,
                 fontWeight: 700,
                 letterSpacing: 1,
               }}
             >
-              ROUTE &amp; RUN JOB →
+              ROUTE &amp; RUN
             </div>
           </Panel>
           <Panel>
@@ -873,10 +880,10 @@ const Settlement: React.FC = () => {
           >
             <Dot color={C.gold} />
             <div style={{ fontFamily: display, fontSize: 26, marginTop: 18 }}>
-              Verified &amp; settled
+              Verified &amp; validated
             </div>
             <div style={{ color: C.gold, fontFamily: mono, marginTop: 12, fontSize: 14 }}>
-              Base USDC · 1.00
+              Base Sepolia · dry-run
             </div>
           </Panel>
         </div>
@@ -893,9 +900,9 @@ const Settlement: React.FC = () => {
         >
           <div style={{ display: "grid", gridTemplateColumns: "160px 1fr", rowGap: 12, columnGap: 24, fontFamily: mono, fontSize: 15 }}>
             <div style={{ color: C.muted }}>ACP job</div>
-            <div style={{ color: C.bright }}>acp:8453:0x7c…af·job_id 4471</div>
-            <div style={{ color: C.muted }}>Base payment</div>
-            <div style={{ color: C.bright }}>0x9f2a…8d1b · basescan.org/tx</div>
+             <div style={{ color: C.muted }}>not configured · delegation skipped</div>
+             <div style={{ color: C.muted }}>Base validation</div>
+             <div style={{ color: C.bright }}>dryrun:84532:gas-estimated · no broadcast</div>
             <div style={{ color: C.muted }}>Verifier</div>
             <div style={{ color: C.bright }}>BasicVerifier · report + success</div>
           </div>
@@ -909,7 +916,7 @@ const Settlement: React.FC = () => {
             letterSpacing: 1,
           }}
         >
-          Virtuals delegates. Base settles. Sibyl records. Payment only follows verification.
+          Verification gates settlement. Dry-run validation is explicit and never presented as a live payment.
         </div>
       </div>
     </AbsoluteFill>
@@ -934,7 +941,7 @@ const Outro: React.FC = () => {
       <Grid />
       <div style={{ ...fade(f), zIndex: 1 }}>
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
-          <Logo />
+          <Logo size={92} />
         </div>
         <h2 style={{ fontFamily: display, fontSize: 68, margin: 0 }}>
           Build agents that
@@ -950,7 +957,7 @@ const Outro: React.FC = () => {
             letterSpacing: 3,
           }}
         >
-          PRAETOR.UP.RAILWAY.APP
+          PRAETORV1.UP.RAILWAY.APP
         </div>
         <div
           style={{

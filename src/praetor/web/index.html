@@ -16,7 +16,8 @@
     --green:#3df5a0; --green2:#7cffb2; --gold:#e7b94d; --red:#ff6b6b;
     --danger:#ff8a5b;
     --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-    --disp:"Space Grotesk",-apple-system,BlinkMacSystemFont,sans-serif;
+     --disp:"Space Grotesk",-apple-system,BlinkMacSystemFont,sans-serif;
+     color-scheme:dark;
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
@@ -26,6 +27,7 @@
       radial-gradient(900px 500px at 90% 10%, rgba(231,185,77,.05), transparent 60%);
     min-height:100vh;}
   a{color:var(--green); text-decoration:none} a:hover{color:var(--green2)}
+  :focus-visible{outline:2px solid var(--green2); outline-offset:3px}
 
   /* banners */
   .banner{padding:14px 32px; border-bottom:1px solid transparent;
@@ -65,6 +67,7 @@
   .env-strip .v{font-family:var(--disp); font-weight:700; font-size:20px; color:var(--ink); line-height:1.2}
   .env-strip .v.gold{color:var(--gold)}
   .env-strip .sub{color:var(--muted); font-size:11.5px; margin-top:5px; word-break:break-all}
+  .env-strip .sub.err{color:var(--danger); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; word-break:normal; cursor:help}
 
   .console-intro{max-width:1240px; margin:58px auto 0; padding:0 32px; display:flex;
     align-items:flex-end; justify-content:space-between; gap:24px}
@@ -74,16 +77,58 @@
   .console-intro .signal{flex:0 0 auto; display:flex; align-items:center; gap:8px; color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.12em}
   .signal .live-dot{width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 12px var(--green)}
 
+  /* how-it-works explainer band */
+  .howto{max-width:1240px; margin:34px auto 0; padding:0 32px}
+  .howto-inner{border:1px solid var(--line2); border-radius:14px; background:var(--panel);
+    padding:20px 22px}
+  .howto h3{font-family:var(--disp); font-weight:700; font-size:11px; letter-spacing:.16em;
+    text-transform:uppercase; color:var(--muted); margin:0 0 4px}
+  .howto .lede{color:var(--ink); font-size:13px; margin:0 0 16px; max-width:820px}
+  .howto .lede b{color:var(--green2)}
+  .howto ol{list-style:none; counter-reset:step; margin:0; padding:0;
+    display:grid; grid-template-columns:repeat(3,1fr); gap:14px}
+  .howto li{counter-increment:step; position:relative; padding:14px 16px 14px 46px;
+    border:1px solid var(--line2); border-radius:11px; background:var(--panel2); font-size:12.5px; color:var(--muted)}
+  .howto li:before{content:counter(step); position:absolute; left:14px; top:13px;
+    width:22px; height:22px; border-radius:50%; display:grid; place-items:center;
+    background:rgba(61,245,160,.12); color:var(--green); border:1px solid rgba(61,245,160,.4);
+    font-family:var(--disp); font-weight:700; font-size:12px}
+  .howto li b{color:var(--ink)}
+  .howto li > b:first-child{font-family:var(--disp); display:block; margin-bottom:3px; font-size:13px; letter-spacing:.01em}
+  @media (max-width:820px){ .howto ol{grid-template-columns:1fr} .howto{padding:0 20px} }
+
   /* Each operator concern gets a full-width stage, rather than competing in a grid. */
   main{max-width:1240px; margin:0 auto; padding:38px 32px 100px; display:block}
   main > .card{margin:0 0 112px; padding:34px 36px; border-radius:0; position:relative}
   main > .card:last-child{margin-bottom:0}
   main > .card:before{content:attr(data-section); position:absolute; top:-29px; left:1px; color:var(--green); font-size:10px; letter-spacing:.18em; text-transform:uppercase}
-  main > .card:nth-child(1){border-left:2px solid var(--green)}
-  main > .card:nth-child(2){border-left:2px solid var(--gold)}
-  main > .card:nth-child(3){border-left:2px solid #53d8ff}
-  main > .card:nth-child(4){border-left:2px solid #b998ff}
-  main > .card:nth-child(2),main > .card:nth-child(4){background:rgba(9,22,16,.38)}
+  main > .card:nth-child(1){border-left:2px solid var(--green)}   /* Workers */
+  main > .card:nth-child(2){border-left:2px solid #53d8ff}         /* Memory */
+  main > .card:nth-child(3){border-left:2px solid var(--green2)}   /* Integrate */
+  main > .card:nth-child(2){background:rgba(9,22,16,.38)}
+
+  /* §05 integrate a worker — doc styling */
+  .doc-h{font-family:var(--disp); font-weight:700; font-size:13px; letter-spacing:.02em;
+    color:var(--ink); margin:22px 0 8px}
+  .doc-h:first-of-type{margin-top:8px}
+  .doc-h .doc-h-sub{color:var(--muted); font-weight:400; font-family:var(--mono); font-size:12px; letter-spacing:0}
+  .doc-p{color:var(--muted); font-size:13px; margin:0 0 10px; max-width:900px}
+  .doc-p b, .doc-list b{color:var(--ink)}
+  .doc-list{list-style:none; padding:0; margin:0 0 10px}
+  .doc-list li{position:relative; padding:6px 0 6px 16px; color:var(--muted); font-size:13px}
+  .doc-list li:before{content:"›"; position:absolute; left:0; top:6px; color:var(--green)}
+  .doc-p code, .doc-list code, .doc-note code{background:rgba(61,245,160,.09); color:var(--green2);
+    padding:1px 6px; border-radius:5px; font-size:12px; border:1px solid var(--line2)}
+  .doc-note{margin-top:8px; max-width:900px}
+  .code-block{border:1px solid var(--line2); border-radius:11px; background:var(--panel2);
+    margin:6px 0 6px; overflow:hidden}
+  .code-head{display:flex; align-items:center; justify-content:space-between;
+    padding:8px 12px; border-bottom:1px solid var(--line2); background:rgba(9,22,16,.7);
+    font-family:var(--mono); font-size:11px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase}
+  .code-block pre{margin:0; padding:14px 16px; overflow-x:auto; font-family:var(--mono); font-size:12.5px;
+    color:var(--ink); line-height:1.55}
+  .code-block code{white-space:pre; color:inherit; background:transparent; border:0; padding:0; font-size:inherit}
+  .copy-btn{padding:4px 10px; font-size:11px; border-radius:7px}
   .card h2{font-family:var(--disp); font-weight:700; font-size:12.5px;
     text-transform:uppercase; letter-spacing:.16em; color:var(--muted);
     margin:0 0 14px; display:flex; align-items:center; gap:8px;}
@@ -107,10 +152,10 @@
   label{display:block; font-size:11.5px; color:var(--muted); margin:10px 0 4px; letter-spacing:.05em; text-transform:uppercase}
   input[type=text], input[type=number], input[type=password], select{
     width:100%; background:var(--panel2); color:var(--ink); font-family:var(--mono);
-    border:1px solid var(--line2); border-radius:10px; padding:10px 12px; font-size:13px;}
+     border:1px solid var(--line2); border-radius:10px; padding:10px 12px; font-size:13px;}
   input:focus, select:focus{outline:none; border-color:rgba(61,245,160,.55)}
   .row{display:flex; gap:12px}
-  .row > div{flex:1}
+  .row > div{flex:1; min-width:0}
   .actions{display:flex; gap:10px; margin-top:14px; flex-wrap:wrap}
 
   /* tables + feed + trace */
@@ -143,7 +188,7 @@
   .status-line{min-height:18px; margin-top:10px; color:var(--muted); font-size:11.5px}
   .status-line.error{color:var(--red)}
 
-  footer{padding:26px 32px; color:var(--muted); font-size:11.5px; text-align:center; border-top:1px solid var(--line2)}
+  footer{padding:26px 32px; color:var(--muted); font-size:11.5px; text-align:center; border-top:1px solid var(--line2); overflow-wrap:anywhere}
   footer a{color:var(--muted)} footer a:hover{color:var(--green)}
   @media (max-width: 960px){
     main{padding:38px 20px 70px}
@@ -158,11 +203,13 @@
     .logo-mark{width:40px; height:40px; font-size:19px; border-radius:10px}
     .wordmark{font-size:21px}
     .tagline{font-size:10.5px; line-height:1.35; max-width:190px}
-    .chips{width:100%; margin-left:0}
+    .chips{width:100%; margin-left:0; max-height:72px; overflow:auto; padding-bottom:2px}
     .env-strip{grid-template-columns:1fr; margin:14px 16px 0}
     main{padding:32px 16px 58px}
     main > .card{margin-bottom:78px; padding:23px 18px}
     .row{flex-direction:column; gap:0}
+    .banner{padding:12px 16px}
+    .banner input{width:min(100%, 280px) !important}
     .feed li .h{align-items:flex-start; flex-wrap:wrap; gap:6px}
     .feed li .h time{width:100%; margin-left:0}
   }
@@ -170,7 +217,7 @@
 </head>
 <body>
 
-<div id="banners"></div>
+<div id="banners" aria-live="polite"></div>
 
 <div class="topbar">
   <a class="brand" href="/" aria-label="Praetor home">
@@ -187,73 +234,39 @@
   <div class="chips" id="stack-chips"></div>
 </div>
 
-<section class="console-intro">
+  <section class="console-intro" aria-labelledby="console-heading">
   <div>
-    <div class="eyebrow">Live control plane</div>
-    <h1>Route work with evidence.</h1>
-    <p>Route reputation-aware assignments, register workers, and inspect every settlement reference from a single control plane.</p>
+    <div class="eyebrow">Live monitor</div>
+    <h1 id="console-heading">Route work with evidence.</h1>
+    <p>Watch worker reputation, Sibyl memory, and settlement state. Every write to Praetor — register, dispatch, retire — is an HTTP call: this page is the read surface. See <a href="#integrate">§03 · Integrate with Praetor</a> for the contract.</p>
   </div>
   <div class="signal"><span class="live-dot"></span>Online</div>
 </section>
 
-<section class="env-strip" id="env"></section>
+  <section class="env-strip" id="env" aria-label="Environment status"></section>
+
+<section class="howto">
+  <div class="howto-inner">
+    <h3>What this console does</h3>
+    <p class="lede">Praetor is a <b>coordinator for autonomous agents</b>. You (the operator) register your agents once (<b>workers</b>), then hand Praetor <b>jobs</b>. It picks the best worker using each one's past track record — held in <b>Sibyl Memory</b> — dispatches to it, verifies the result, and (when Base &amp; Virtuals are connected) settles payment on-chain. <b>Workers never open this UI; nor does the operator drive Praetor from it.</b> All interactions are HTTP calls to the API — this page shows what those calls produced.</p>
+    <ol>
+      <li><b>Register your workers</b>A one-time <code>POST /api/workers</code> per agent. See <a href="#integrate">§03.1</a>. Registered agents show up in <b>§01 · Workers</b>.</li>
+      <li><b>Submit a job</b><code>POST /api/jobs</code> from your client, script, or upstream service. See <a href="#integrate">§03.2</a>. Praetor picks a worker, dispatches, verifies, and (if configured) settles USDC on Base.</li>
+      <li><b>Inspect the evidence</b>Reputation updates in <b>§01</b>, live counters + full-text history in <b>§02 · Memory</b>. Every routing decision leaves a receipt in Sibyl.</li>
+    </ol>
+  </div>
+</section>
 
 <main>
-  <!-- LEFT — register / manage workers -->
+  <!-- §01 — inspect workers (read-only) -->
   <section class="card" data-section="01 / WORKERS">
-    <h2>Workers <span class="sub">registered on Sibyl Memory</span></h2>
+    <h2>Workers <span class="sub">read-only view of registered agents and their reputation</span></h2>
     <div id="worker-list"></div>
-
-    <details style="margin-top:16px">
-      <summary style="cursor:pointer; color:var(--green); font-family:var(--disp); font-size:13px; letter-spacing:.03em">+ register a worker</summary>
-      <div style="margin-top:12px">
-        <label>Name</label>
-        <input type="text" id="w-name" placeholder="risk-analyst-mainnet" />
-        <label>Capabilities <span style="color:var(--dim); text-transform:none">(comma-separated)</span></label>
-        <input type="text" id="w-caps" placeholder="risk, audit" />
-        <div class="row">
-          <div>
-            <label>Payment wallet</label>
-            <input type="text" id="w-wallet" placeholder="0x…" />
-          </div>
-          <div>
-            <label>ACP agent id / keyword</label>
-            <input type="text" id="w-acp" placeholder="risk-reviewer" />
-          </div>
-        </div>
-        <label>Max job value <span style="color:var(--dim); text-transform:none">(USDC, blank = no limit)</span></label>
-        <input type="number" id="w-max" step="0.1" min="0" />
-        <div class="actions">
-          <button class="primary" id="w-save">Save worker</button>
-        </div>
-        <div id="w-msg" class="note" style="margin-top:8px"></div>
-      </div>
-    </details>
+    <p class="note" style="margin-top:14px">Registration and retirement are API operations, not UI actions — see <a href="#integrate">§03 · Integrate with Praetor</a>.</p>
   </section>
 
-  <!-- RIGHT — submit a job -->
-  <section class="card" data-section="02 / JOB ROUTER">
-    <h2>Submit a job</h2>
-    <label>Task</label>
-    <input type="text" id="j-task" placeholder="Review a Base lending protocol" />
-    <div class="row">
-      <div>
-        <label>Category</label>
-        <input type="text" id="j-cat" value="risk" />
-      </div>
-      <div>
-        <label>Value (USDC)</label>
-        <input type="number" id="j-val" value="0" step="0.5" min="0" />
-      </div>
-    </div>
-    <div class="actions">
-      <button class="primary" id="j-run">Route &amp; run</button>
-    </div>
-    <div id="j-result" style="display:none; margin-top:14px"></div>
-  </section>
-
-  <!-- WIDE — Sibyl memory -->
-  <section class="card wide" data-section="03 / MEMORY">
+  <!-- §02 — Sibyl memory -->
+  <section class="card wide" data-section="02 / MEMORY">
     <h2>Sibyl Memory <span class="sub">the five-tier store every routing decision loads on</span></h2>
     <div id="mem-tiers" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px"></div>
     <div id="mem-body" style="display:grid; grid-template-columns:1fr 1fr; gap:20px"></div>
@@ -263,20 +276,59 @@
         <div style="flex:3"><input type="text" id="mem-q" placeholder="e.g. liquidity, a worker name, or a job id" /></div>
         <div style="flex:0 0 auto"><button class="ghost" id="mem-search-btn">Search</button></div>
       </div>
-      <div id="mem-results" style="margin-top:12px"></div>
+      <div id="mem-results" role="status" aria-live="polite" style="margin-top:12px"></div>
     </div>
   </section>
 
-  <!-- WIDE — activity -->
-  <section class="card wide" data-section="04 / ACTIVITY">
-    <h2>Activity <span class="sub">recent jobs (most recent first)</span></h2>
-    <ul class="feed" id="feed"><li class="empty">No jobs yet.</li></ul>
+  <!-- §03 — how the operator drives Praetor -->
+  <section class="card wide" id="integrate" data-section="03 / INTEGRATE WITH PRAETOR">
+    <h2>Integrate with Praetor <span class="sub">every write is an HTTP call — this page is the read view</span></h2>
+
+    <h3 class="doc-h">The actor model</h3>
+    <ul class="doc-list">
+      <li><b>You (operator)</b> — the only human. You register workers, submit jobs, and monitor state <em>via the API</em>. This UI shows what those calls produced.</li>
+      <li><b>Worker (agent)</b> — an autonomous process running on your infrastructure. It <em>never</em> opens this UI. Praetor holds a record of it (name, capabilities, wallet, ACP id) and calls it when a job matches.</li>
+      <li><b>Client (upstream)</b> — whoever hands jobs to Praetor. Usually your product's backend, a script, or another agent. Talks to <code>POST /api/jobs</code>.</li>
+      <li><b>Praetor (coordinator)</b> — this server. Picks the highest-reputation matching worker, dispatches, verifies, records, settles.</li>
+    </ul>
+
+    <h3 class="doc-h">3.1 · Register a worker <span class="doc-h-sub">— one-time, per agent</span></h3>
+    <p class="doc-p">Praetor stores an entity in Sibyl Memory keyed by <code>name</code>. Repeat calls with the same name update capabilities/wallet/ACP id in place — reputation is never overwritten.</p>
+    <div class="code-block">
+      <div class="code-head"><span>POST /api/workers</span><button class="ghost copy-btn" data-copy="reg">Copy</button></div>
+      <pre id="code-reg"><code></code></pre>
+    </div>
+    <p class="note doc-note">Fields: <code>name</code> and <code>capabilities</code> are required. <code>wallet</code> receives USDC payouts on Base. <code>acp_agent</code> is the Virtuals ACP agent id/keyword used for delegation. <code>max_value_usdc</code> caps what this worker can be routed. <span id="tok-hint"></span></p>
+
+    <h3 class="doc-h">3.2 · Submit a job <span class="doc-h-sub">— route, run, verify, settle</span></h3>
+    <p class="doc-p">Praetor picks the highest-reputation eligible worker, invokes the executor, runs the result through the verifier, and — if Base is configured with a signer — settles USDC. Only workers whose capabilities include the <code>category</code> are eligible; if none match, the call returns <code>400</code>.</p>
+    <div class="code-block">
+      <div class="code-head"><span>POST /api/jobs</span><button class="ghost copy-btn" data-copy="job">Copy</button></div>
+      <pre id="code-job"><code></code></pre>
+    </div>
+    <p class="note doc-note">The response includes <code>routed_to</code>, <code>verified</code>, <code>routing_trace</code> (the semantic-search-aware decision), <code>acp_reference</code> (Virtuals ACP job id), and <code>payment_reference</code> (Base tx hash or <code>dryrun:…</code>). On mainnet with <code>value_usdc &gt; 0</code>, real USDC moves from the signer wallet.</p>
+
+    <h3 class="doc-h">3.3 · Retire a worker</h3>
+    <p class="doc-p">The worker leaves the active routing set, but its events and receipts stay in Sibyl Memory — the audit trail is preserved.</p>
+    <div class="code-block">
+      <div class="code-head"><span>DELETE /api/workers/&lt;name&gt;</span><button class="ghost copy-btn" data-copy="del">Copy</button></div>
+      <pre id="code-del"><code></code></pre>
+    </div>
+
+    <h3 class="doc-h">How Praetor reaches the worker</h3>
+    <p class="doc-p">When a job routes, the server invokes an <b>executor</b> function with the winning <code>WorkerProfile</code> and <code>Job</code>. The shipped default emits a deterministic signed report so verification and settlement paths run on real content. To dispatch to a real agent:</p>
+    <ul class="doc-list">
+      <li><b>HTTP executor (simplest)</b> — swap <code>_executor</code> in <code>src/praetor/api.py</code> to forward the task to your worker's endpoint and return its response as a <code>JobResult</code>. Your worker exposes whatever URL and auth it likes; Praetor is the caller, not the callee.</li>
+      <li><b>Virtuals ACP delegation</b> — set <code>VIRTUALS_*</code> env vars (see <code>.env.example</code>) and register the worker with an <code>acp_agent</code> id. Praetor opens an ACP job against the agent's on-chain account.</li>
+    </ul>
+
+    <p class="note" style="margin-top:18px">Full REST reference: interactive docs at <a id="api-docs-link" href="/docs" target="_blank" rel="noopener">/docs</a>.</p>
   </section>
 </main>
 
 <footer>
   Praetor · Sibyl Memory + Base + Virtuals ACP
-  · <a href="https://docs.sibyllabs.org" target="_blank">docs.sibyllabs.org</a>
+  · <a href="https://docs.sibyllabs.org" target="_blank" rel="noopener noreferrer">docs.sibyllabs.org</a>
   · <a href="https://github.com/drained69/Praetor" target="_blank" rel="noreferrer" aria-label="Praetor GitHub repository"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" style="vertical-align:-3px;fill:currentColor"><path d="M12 .5a12 12 0 0 0-3.79 23.39c.6.11.82-.26.82-.58v-2.04c-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.74.08-.74 1.2.09 1.83 1.23 1.83 1.23 1.07 1.83 2.8 1.3 3.48.99.11-.77.42-1.3.76-1.6-2.67-.3-5.47-1.34-5.47-5.95 0-1.31.47-2.38 1.23-3.22-.12-.3-.53-1.52.12-3.17 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.3-1.55 3.3-1.23 3.3-1.23.65 1.65.24 2.87.12 3.17.77.84 1.23 1.91 1.23 3.22 0 4.62-2.8 5.64-5.48 5.94.43.37.81 1.1.81 2.22v3.29c0 .32.22.69.83.57A12 12 0 0 0 12 .5Z"/></svg> GitHub</a>
   · <span id="mb">memory: —</span>
 </footer>
@@ -297,58 +349,23 @@ async function jget(u){
 
 let ADMIN_TOKEN = localStorage.getItem('praetor.admin_token') || '';
 let LAST_HEALTH = null;
-const FEED = [];
 
 function ehtml(s){return String(s ?? '').replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));}
 
-async function jpost(u, body){
-  const headers = {'Content-Type':'application/json'};
-  if (ADMIN_TOKEN) headers['X-Admin-Token'] = ADMIN_TOKEN;
-  const r = await fetch(u, {method:'POST', headers, body: JSON.stringify(body || {})});
-  const j = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(j.detail || `HTTP ${r.status}`);
-  return j;
-}
-async function jdel(u){
-  const headers = {};
-  if (ADMIN_TOKEN) headers['X-Admin-Token'] = ADMIN_TOKEN;
-  const r = await fetch(u, {method:'DELETE', headers});
-  const j = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(j.detail || `HTTP ${r.status}`);
-  return j;
+// Collapse a raw multi-line CLI / stack-trace error into one readable line,
+// keeping the full text available on hover. Prevents a Node stack trace from
+// blowing out a status tile.
+function friendlyError(raw, fallback){
+  const full = String(raw ?? '').trim();
+  if(!full) return {short: fallback || '', full: fallback || ''};
+  const first = full.split('\n')[0].replace(/\s+/g,' ').trim();
+  const short = first.length > 110 ? first.slice(0,107) + '…' : first;
+  return {short, full};
 }
 
 function chip(label, on, mode){
   const cls = on ? 'chip on' : 'chip off';
   return `<span class="${cls}"><span class="dotpulse"></span><b>${ehtml(label)}</b> ${ehtml(mode)}</span>`;
-}
-
-function refLink(label, value, base){
-  if(!value) return '';
-  let out = value;
-  const isTxHash = /^0x?[0-9a-fA-F]{64}$/.test(value);
-  if(base?.explorer && isTxHash){
-    const clean = value.startsWith('0x') ? value : '0x' + value;
-    out = `<a href="${ehtml(base.explorer)}/tx/${ehtml(clean)}" target="_blank">${ehtml(clean.slice(0,10))}…${ehtml(clean.slice(-6))}</a>`;
-  } else if(value.startsWith('acp:')){
-    out = `<a href="https://app.virtuals.io/acp/jobs/${ehtml(value.split(':').pop())}" target="_blank">${ehtml(value)}</a>`;
-  } else if(value.startsWith('dryrun:')){
-    out = `<span title="${ehtml(value)}">dry-run · gas estimated</span>`;
-  } else {
-    out = ehtml(value);
-  }
-  return `<span><b>${ehtml(label)}:</b> ${out}</span>`;
-}
-
-function traceExplanation(trace){
-  if(!trace || !trace.candidates?.length) return '';
-  const hits = trace.candidates.filter(c => c.semantic_hit);
-  const chosen = trace.candidates.find(c => c.chosen);
-  if(hits.length === 0){
-    return `<span class="note">Semantic search found no past failures related to this task.</span>`;
-  }
-  const names = hits.map(c => c.name).join(', ');
-  return `<span class="note" style="color:var(--gold)"><b>Semantic downweight:</b> ${ehtml(names)} previously failed on similar work — routed to <b>${ehtml(chosen?.name || '?')}</b> instead.</span>`;
 }
 
 // ============================================================ BANNERS
@@ -361,8 +378,11 @@ function renderBanners(h){
   if(!op.admin_token_required){
     parts.push(`<div class="banner warn"><b>Admin token is not configured.</b> Any visitor to this URL can register workers and submit jobs. Set <code>PRAETOR_ADMIN_TOKEN</code> before exposing this server to the public.</div>`);
   } else if(!ADMIN_TOKEN){
-    parts.push(`<div class="banner warn"><b>Admin token required to make changes.</b> <input id="tok" type="password" style="width:260px; display:inline-block; margin-left:8px; padding:6px 10px; background:transparent; color:var(--ink); border:1px solid rgba(255,138,91,.5); border-radius:6px" placeholder="X-Admin-Token" />
+    parts.push(`<div class="banner warn"><b>This server is locked.</b> <span>Registering workers, submitting jobs, and deleting are protected. Enter the admin token the operator configured (<code>PRAETOR_ADMIN_TOKEN</code>) to unlock this browser. It is stored only on this device — viewing stays available without it.</span>
+      <input id="tok" type="password" style="width:220px; display:inline-block; padding:6px 10px; background:transparent; color:var(--ink); border:1px solid rgba(255,138,91,.5); border-radius:6px" placeholder="Admin token" />
       <button class="ghost" onclick="const v=document.getElementById('tok').value.trim(); if(v){localStorage.setItem('praetor.admin_token', v); location.reload();}">Unlock</button></div>`);
+  } else {
+    parts.push(`<div class="banner warn" style="background:rgba(61,245,160,.06); border-color:rgba(61,245,160,.35); color:var(--green)"><b>Unlocked</b> · admin token active on this device. <button class="ghost" style="padding:5px 10px" onclick="localStorage.removeItem('praetor.admin_token'); location.reload();">Lock again</button></div>`);
   }
   $('banners').innerHTML = parts.join('');
 }
@@ -372,14 +392,16 @@ function renderEnv(h){
   const b = h.base || {}, v = h.virtuals || {};
   const isMainnet = b.chain_id === 8453;
   const chainLabel = isMainnet ? 'Mainnet' : (b.chain_id === 84532 ? 'Sepolia' : 'Chain');
+  const baseErr = friendlyError(b.error, 'Base is not configured.');
   const base_v = b.configured
     ? `<div class="v">${ehtml(chainLabel)} <span style="color:var(--muted); font-size:14px">· ${ehtml(b.chain_id)}</span></div>
-       <div class="sub">Block ${ehtml(b.block_number)} · ${b.can_broadcast?'<span class="tag good">broadcast-ready</span>':'<span class="tag warn">dry-run</span>'}</div>`
-    : `<div class="v" style="color:var(--muted)">Offline</div><div class="sub">${ehtml(b.error||'Base is not configured.')}</div>`;
+       <div class="sub">Block ${ehtml(b.block_number)} · ${b.can_broadcast?'<span class="tag good" title="A signer key is set — verified jobs settle USDC on-chain.">broadcast-ready</span>':'<span class="tag warn" title="No signer key — payments are simulated, nothing is sent on-chain.">dry-run</span>'}</div>`
+    : `<div class="v" style="color:var(--muted)">Offline</div><div class="sub err" title="${ehtml(baseErr.full)}">${ehtml(baseErr.short)}</div>`;
+  const virtErr = friendlyError(v.error, 'Virtuals ACP is not configured.');
   const virt_v = v.configured
     ? `<div class="v">Live <span style="color:var(--muted); font-size:14px">· ${ehtml(v.backend||'')}</span></div>
        <div class="sub">${ehtml(v.agent_name||v.agent_wallet||'Agent connected')}</div>`
-    : `<div class="v" style="color:var(--muted)">Offline</div><div class="sub">${ehtml(v.error||'Virtuals ACP is not configured.')}</div>`;
+    : `<div class="v" style="color:var(--muted)">Offline</div><div class="sub err" title="${ehtml(virtErr.full)}">${ehtml(virtErr.short)}</div>`;
   const mem_v = `<div class="v">${ehtml(h.memory_backend)}</div>
                  <div class="sub">${h.memory_backend==='sibyl'?'Durable across restarts and deployments':'Ephemeral — a restart wipes all state'}</div>`;
   const signer = b.sender || '';
@@ -389,10 +411,10 @@ function renderEnv(h){
     : `<div class="v" style="color:var(--muted)">Not configured</div>
        <div class="sub">No signer key is set — all Base activity runs in dry-run mode.</div>`;
   $('env').innerHTML = `
-    <div class="tile"><div class="k">Memory</div>${mem_v}</div>
-    <div class="tile"><div class="k">Base</div>${base_v}</div>
-    <div class="tile"><div class="k">Virtuals</div>${virt_v}</div>
-    <div class="tile"><div class="k">Signer</div>${signer_v}</div>`;
+    <div class="tile"><div class="k" title="Where worker reputation and job history are stored.">Memory</div>${mem_v}</div>
+    <div class="tile"><div class="k" title="The Base chain connection used to settle USDC payments to workers.">Base</div>${base_v}</div>
+    <div class="tile"><div class="k" title="Virtuals ACP — used to delegate a job to a registered on-chain agent.">Virtuals</div>${virt_v}</div>
+    <div class="tile"><div class="k" title="The wallet that signs and broadcasts USDC settlement transactions.">Signer</div>${signer_v}</div>`;
 }
 
 // ============================================================ CHIPS
@@ -408,17 +430,24 @@ function renderChips(h){
 // ============================================================ WORKERS
 function renderWorkers(workers){
   if(!workers.length){
-    $('worker-list').innerHTML = `<div class="empty-state"><b>No workers registered yet.</b>Register your first worker below. Its profile and job history persist in Sibyl Memory across restarts and deployments.</div>`;
+    $('worker-list').innerHTML = `<div class="empty-state"><b>No workers registered yet.</b>A worker is an autonomous agent running elsewhere that Praetor can dispatch jobs to. Register your first one via the API — see <a href="#integrate">§05 · Integrate a worker</a> below.</div>`;
     return;
   }
   $('worker-list').innerHTML = `<div class="table-scroll"><table>
-    <thead><tr><th>Name</th><th>Capabilities</th><th>Reliability</th><th>Succ</th><th>Fail</th><th>Status</th><th></th></tr></thead>
+    <thead><tr>
+      <th title="Worker name, and its payment wallet if set">Name</th>
+      <th title="Job categories this worker can be routed">Capabilities</th>
+      <th title="Share of past jobs that succeeded and were verified">Reliability</th>
+      <th title="Verified successful jobs">Successes</th>
+      <th title="Failed jobs">Failures</th>
+      <th title="Routing status derived from history">Status</th>
+    </tr></thead>
     <tbody>${workers.map(w => {
       const total = w.successes + w.failures;
-      const rel = total === 0 ? '<span style="color:var(--muted)">—</span>' : `${(w.reliability*100).toFixed(0)}%`;
+      const rel = total === 0 ? '<span style="color:var(--muted)" title="No jobs run yet">—</span>' : `${(w.reliability*100).toFixed(0)}%`;
       const status = w.requires_review
-        ? '<span class="tag bad">review</span>'
-        : total === 0 ? '<span class="tag cold">cold-start</span>' : '<span class="tag good">trusted</span>';
+        ? '<span class="tag bad" title="A past failure flagged this worker for review; it is down-weighted in routing.">review</span>'
+        : total === 0 ? '<span class="tag cold" title="Registered but has not run a job yet; no track record.">cold-start</span>' : '<span class="tag good" title="Has a clean, verified track record and is preferred in routing.">trusted</span>';
       return `<tr>
         <td><b>${ehtml(w.name)}</b>${w.wallet?`<div class="mono" style="color:var(--muted); font-size:10.5px">${ehtml(w.wallet)}</div>`:''}</td>
         <td class="n">${ehtml(w.capabilities.join(', '))}</td>
@@ -426,107 +455,13 @@ function renderWorkers(workers){
         <td class="n">${w.successes}</td>
         <td class="n">${w.failures}</td>
         <td>${status}</td>
-        <td><button class="icon-btn" onclick="removeWorker('${ehtml(w.name)}')">delete</button></td>
       </tr>`;
-    }).join('')}</tbody></table></div>`;
-}
-
-async function removeWorker(name){
-  if(!confirm(`Remove worker "${name}"?\n\nHistorical events remain in Sibyl Memory; the worker will no longer be considered for routing.`)) return;
-  try {
-    await jdel(`/api/workers/${encodeURIComponent(name)}`);
-    await refresh();
-  } catch (e) {
-    alert('Removal failed: ' + e.message);
-  }
-}
-
-// ============================================================ REGISTER
-$('w-save').onclick = async () => {
-  const btn = $('w-save'); btn.disabled = true;
-  try {
-    const name = $('w-name').value.trim();
-    const caps = $('w-caps').value.split(',').map(s => s.trim()).filter(Boolean);
-    if(!name || caps.length === 0){
-      $('w-msg').innerHTML = `<span class="tag bad">Missing</span> A name and at least one capability are required.`;
-      return;
-    }
-    const payload = {
-      name, capabilities: caps,
-      wallet: $('w-wallet').value.trim(),
-      acp_agent: $('w-acp').value.trim(),
-      max_value_usdc: $('w-max').value ? parseFloat($('w-max').value) : null,
-    };
-    const r = await jpost('/api/workers', payload);
-    $('w-msg').innerHTML = `<span class="tag good">${r.created?'registered':'updated'}</span> ${ehtml(r.worker.name)}`;
-    $('w-name').value = ''; $('w-caps').value = ''; $('w-wallet').value = ''; $('w-acp').value = ''; $('w-max').value = '';
-    await refresh();
-  } catch (e) {
-    $('w-msg').innerHTML = `<span class="tag bad">error</span> ${ehtml(e.message)}`;
-  } finally {
-    btn.disabled = false;
-  }
-};
-
-// ============================================================ SUBMIT
-$('j-run').onclick = async () => {
-  const btn = $('j-run'); btn.disabled = true;
-  const box = $('j-result'); box.style.display = 'block';
-  try {
-    const task = $('j-task').value.trim();
-    if(!task) throw new Error('A task description is required.');
-    const req = {
-      task, category: $('j-cat').value.trim() || 'risk',
-      value_usdc: parseFloat($('j-val').value) || 0,
-    };
-    const health = LAST_HEALTH || (await jget('/api/health'));
-    if(health.operator?.mainnet && req.value_usdc > 0){
-      if(!confirm(`Confirm mainnet settlement\n\nThis job will settle ${req.value_usdc} USDC on Base mainnet from the configured signer if verification succeeds.\n\nProceed?`)) throw new Error('Cancelled by operator.');
-    }
-    const out = await jpost('/api/jobs', req);
-    const okTag = out.success ? '<span class="tag good">success</span>' : '<span class="tag bad">failed</span>';
-    const vTag = out.verified ? '<span class="tag good">verified</span>' : '<span class="tag bad">unverified</span>';
-    box.innerHTML = `${okTag}${vTag}
-      <div class="kv" style="margin-top:10px">
-        <div class="k">Routed to</div><div><b>${ehtml(out.routed_to)}</b></div>
-        ${out.reason?`<div class="k">Reason</div><div class="mono" style="color:var(--muted)">${ehtml(out.reason)}</div>`:''}
-        ${out.acp_reference?`<div class="k">ACP job</div><div class="mono">${ehtml(out.acp_reference)}</div>`:''}
-        ${out.payment_reference?`<div class="k">Base payment</div><div class="mono">${ehtml(out.payment_reference)}</div>`:''}
-      </div>
-      <div style="margin-top:12px">${traceExplanation(out.routing_trace)}</div>`;
-    pushFeed({
-      ts: new Date().toLocaleTimeString(),
-      task: req.task, routed_to: out.routed_to, success: out.success, verified: out.verified,
-      reason: out.reason, acp_reference: out.acp_reference, payment_reference: out.payment_reference,
-      trace: out.routing_trace,
-    });
-    await refresh();
-  } catch (e) {
-    box.innerHTML = `<span class="tag bad">error</span> ${ehtml(e.message)}`;
-  } finally {
-    btn.disabled = false;
-  }
-};
-
-// ============================================================ FEED
-function pushFeed(entry){
-  FEED.unshift(entry); FEED.splice(10);
-  const html = FEED.map(e => {
-    const okTag = e.success ? '<span class="tag good">success</span>' : '<span class="tag bad">failed</span>';
-    const vTag = e.verified ? '<span class="tag good">verified</span>' : '<span class="tag bad">unverified</span>';
-    return `<li>
-      <div class="h">${okTag}${vTag}<b>${ehtml(e.routed_to)}</b>
-        <span class="mono" style="color:var(--muted)"> · ${ehtml(e.task)}</span>
-        <time>${ehtml(e.ts)}</time></div>
-      ${e.reason ? `<div class="note">reason: ${ehtml(e.reason)}</div>` : ''}
-      ${e.trace ? `<div class="note" style="margin-top:4px">${traceExplanation(e.trace)}</div>` : ''}
-      <div class="refs">
-        ${refLink('Virtuals job', e.acp_reference)}
-        ${refLink('Base payment', e.payment_reference, LAST_HEALTH?.base)}
-      </div>
-    </li>`;
-  }).join('');
-  $('feed').innerHTML = html || '<li class="empty">No jobs yet.</li>';
+    }).join('')}</tbody></table></div>
+    <p class="note" style="margin-top:12px; display:flex; gap:16px; flex-wrap:wrap">
+      <span><span class="tag cold">cold-start</span> no jobs yet</span>
+      <span><span class="tag good">trusted</span> clean verified history</span>
+      <span><span class="tag bad">review</span> down-weighted after a failure</span>
+    </p>`;
 }
 
 // ============================================================ MEMORY
@@ -605,6 +540,62 @@ async function refresh(){
 
 $('mem-search-btn').onclick = runMemorySearch;
 $('mem-q').addEventListener('keydown', (e) => { if(e.key === 'Enter') runMemorySearch(); });
+
+// ============================================================ INTEGRATE DOC
+function renderIntegrateDoc(h){
+  const host = window.location.origin.replace(/\/$/, '');
+  const tokenRequired = !!h?.operator?.admin_token_required;
+  const tokenLine = tokenRequired ? `  -H 'X-Admin-Token: <admin-token>' \\\n` : '';
+  const regCurl =
+`curl -X POST ${host}/api/workers \\
+  -H 'Content-Type: application/json' \\
+${tokenLine}  -d '{
+    "name": "risk-analyst-mainnet",
+    "capabilities": ["risk", "audit"],
+    "wallet": "0xYourWorkerPayoutAddress",
+    "acp_agent": "risk-reviewer",
+    "max_value_usdc": 100
+  }'`;
+  const jobCurl =
+`curl -X POST ${host}/api/jobs \\
+  -H 'Content-Type: application/json' \\
+${tokenLine}  -d '{
+    "task": "Review a Base lending protocol",
+    "category": "risk",
+    "value_usdc": 0
+  }'`;
+  const delCurl =
+`curl -X DELETE ${host}/api/workers/risk-analyst-mainnet${tokenRequired ? ` \\\n  -H 'X-Admin-Token: <admin-token>'` : ''}`;
+  const set = (id, val) => { const el = document.querySelector(`#code-${id} code`); if(el) el.textContent = val; };
+  set('reg', regCurl); set('job', jobCurl); set('del', delCurl);
+  const hint = $('tok-hint');
+  if(hint){
+    hint.textContent = tokenRequired
+      ? 'This server requires an admin token — replace <admin-token> with the value from PRAETOR_ADMIN_TOKEN.'
+      : 'This server has no admin token configured, so the header is omitted from the examples.';
+  }
+}
+document.querySelectorAll('.copy-btn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const which = btn.getAttribute('data-copy');
+    const el = document.querySelector(`#code-${which} code`);
+    if(!el) return;
+    try {
+      await navigator.clipboard.writeText(el.textContent);
+      const prev = btn.textContent; btn.textContent = 'Copied';
+      setTimeout(() => { btn.textContent = prev; }, 1400);
+    } catch (e) {
+      btn.textContent = 'Copy failed';
+    }
+  });
+});
+
+// Wrap refresh to also update the integrate-doc host/token hint.
+const _refresh = refresh;
+refresh = async function(){
+  await _refresh();
+  renderIntegrateDoc(LAST_HEALTH);
+};
 
 refresh();
 setInterval(refresh, 20000);
