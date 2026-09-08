@@ -1,0 +1,6 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {"name": "praetor", "runtimeExecutable": ".venv/bin/praetor-server", "runtimeArgs": [], "port": 8000}
+  ]
+}

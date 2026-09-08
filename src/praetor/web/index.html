@@ -1,0 +1,608 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Praetor · operator console</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#050d09; --panel:rgba(9,22,16,.55); --panel2:rgba(9,22,16,.85);
+    --line:rgba(61,245,160,.20); --line2:rgba(61,245,160,.10);
+    --ink:#d6ece1; --muted:#6f8f80; --dim:#1e6b47;
+    --green:#3df5a0; --green2:#7cffb2; --gold:#e7b94d; --red:#ff6b6b;
+    --danger:#ff8a5b;
+    --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --disp:"Space Grotesk",-apple-system,BlinkMacSystemFont,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--bg); color:var(--ink); font:14px/1.55 var(--mono);
+    background-image:
+      radial-gradient(1200px 600px at 15% -10%, rgba(61,245,160,.08), transparent 60%),
+      radial-gradient(900px 500px at 90% 10%, rgba(231,185,77,.05), transparent 60%);
+    min-height:100vh;}
+  a{color:var(--green); text-decoration:none} a:hover{color:var(--green2)}
+
+  /* banners */
+  .banner{padding:14px 32px; border-bottom:1px solid transparent;
+    font-family:var(--mono); font-size:13px; display:flex; gap:14px; align-items:center; flex-wrap:wrap}
+  .banner.warn{background:rgba(255,138,91,.08); border-color:rgba(255,138,91,.35); color:var(--danger)}
+  .banner.danger{background:rgba(255,107,107,.09); border-color:rgba(255,107,107,.45); color:var(--red)}
+  .banner b{color:var(--ink)}
+
+  /* top bar */
+  .topbar{display:flex; align-items:center; gap:18px; flex-wrap:wrap;
+    padding:22px 32px; border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg, rgba(9,22,16,.55), transparent);}
+  .brand{display:flex; align-items:center; gap:14px; color:inherit; text-decoration:none}
+  .logo-mark{width:42px; height:42px; flex:0 0 auto}
+  .wordmark{font-family:var(--disp); font-weight:700; font-size:26px; letter-spacing:.18em;
+    color:var(--ink); text-transform:uppercase}
+  .wordmark .dot{color:var(--green)}
+  .tagline{color:var(--muted); font-size:12.5px; letter-spacing:.02em}
+  .chips{margin-left:auto; display:flex; gap:8px; flex-wrap:wrap}
+  .chip{font-size:11.5px; letter-spacing:.05em; text-transform:uppercase;
+    padding:6px 11px; border-radius:999px; border:1px solid var(--line2);
+    background:var(--panel); color:var(--muted); display:inline-flex; gap:6px; align-items:center;}
+  .chip b{color:var(--ink); font-weight:600}
+  .chip.on{border-color:rgba(61,245,160,.45); color:var(--green)}
+  .chip.off{border-color:rgba(255,107,107,.45); color:var(--red)}
+  .chip.mainnet{border-color:rgba(255,138,91,.5); color:var(--danger)}
+  .chip .dotpulse{width:6px; height:6px; border-radius:999px; background:currentColor;
+    box-shadow:0 0 0 0 currentColor; animation:pulse 2.4s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 currentColor} 70%{box-shadow:0 0 0 6px rgba(0,0,0,0)} 100%{box-shadow:0 0 0 0 rgba(0,0,0,0)}}
+
+  /* environment strip */
+  .env-strip{display:grid; grid-template-columns:repeat(4, 1fr); gap:16px;
+    margin:20px 32px 8px}
+  .env-strip .tile{padding:16px 18px; border:1px solid var(--line); border-radius:12px;
+    background:var(--panel)}
+  .env-strip .k{color:var(--muted); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; margin-bottom:6px}
+  .env-strip .v{font-family:var(--disp); font-weight:700; font-size:20px; color:var(--ink); line-height:1.2}
+  .env-strip .v.gold{color:var(--gold)}
+  .env-strip .sub{color:var(--muted); font-size:11.5px; margin-top:5px; word-break:break-all}
+
+  .console-intro{max-width:1240px; margin:22px auto 0; padding:0 32px; display:flex;
+    align-items:flex-end; justify-content:space-between; gap:24px}
+  .console-intro .eyebrow{color:var(--green); font-size:10.5px; letter-spacing:.2em; text-transform:uppercase; margin-bottom:8px}
+  .console-intro h1{font-family:var(--disp); font-size:clamp(25px,3vw,38px); line-height:1.05; letter-spacing:-.03em; margin:0}
+  .console-intro p{max-width:620px; margin:9px 0 0; color:var(--muted); font-size:13px}
+  .console-intro .signal{flex:0 0 auto; display:flex; align-items:center; gap:8px; color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.12em}
+  .signal .live-dot{width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 12px var(--green)}
+
+  /* grid */
+  main{max-width:1240px; margin:0 auto; padding:12px 32px 60px; display:grid; gap:20px;
+    grid-template-columns: 1.35fr .95fr; align-items:start;}
+  main > .wide{grid-column:1 / -1}
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:16px;
+    padding:22px 24px;}
+  .card h2{font-family:var(--disp); font-weight:700; font-size:12.5px;
+    text-transform:uppercase; letter-spacing:.16em; color:var(--muted);
+    margin:0 0 14px; display:flex; align-items:center; gap:8px;}
+  .card h2 .sub{color:var(--dim); font-size:11.5px; text-transform:none; letter-spacing:.02em; font-weight:400}
+
+  /* buttons + inputs */
+  .primary{background:linear-gradient(180deg, var(--green2), var(--green));
+    color:#052015; border:0; border-radius:11px; padding:11px 18px;
+    font-family:var(--disp); font-weight:700; font-size:14px; letter-spacing:.03em;
+    cursor:pointer;}
+  .primary:hover{filter:brightness(1.05)}
+  .primary.danger{background:linear-gradient(180deg, #ffbaa0, var(--danger)); color:#231407}
+  .primary:disabled,.ghost:disabled{opacity:.55; cursor:wait}
+  .ghost{background:transparent; color:var(--green); border:1px solid var(--line);
+    border-radius:11px; padding:10px 14px; font-family:var(--mono); font-weight:600; font-size:13px;
+    cursor:pointer;}
+  .ghost:hover{background:var(--panel2); border-color:rgba(61,245,160,.45)}
+  .icon-btn{background:transparent; color:var(--muted); border:1px solid var(--line2); border-radius:8px;
+    padding:5px 9px; font-family:var(--mono); font-size:11px; cursor:pointer}
+  .icon-btn:hover{color:var(--red); border-color:rgba(255,107,107,.4)}
+  label{display:block; font-size:11.5px; color:var(--muted); margin:10px 0 4px; letter-spacing:.05em; text-transform:uppercase}
+  input[type=text], input[type=number], input[type=password], select{
+    width:100%; background:var(--panel2); color:var(--ink); font-family:var(--mono);
+    border:1px solid var(--line2); border-radius:10px; padding:10px 12px; font-size:13px;}
+  input:focus, select:focus{outline:none; border-color:rgba(61,245,160,.55)}
+  .row{display:flex; gap:12px}
+  .row > div{flex:1}
+  .actions{display:flex; gap:10px; margin-top:14px; flex-wrap:wrap}
+
+  /* tables + feed + trace */
+  table{width:100%; border-collapse:collapse}
+  th, td{text-align:left; padding:10px 8px; border-bottom:1px solid var(--line2); font-size:12.5px; vertical-align:middle}
+  th{color:var(--muted); font-weight:600; font-size:10.5px; text-transform:uppercase; letter-spacing:.08em}
+  td.n{color:var(--muted); font-family:var(--mono)}
+  .mono{font-family:var(--mono); font-size:12px; word-break:break-all}
+  .kv{display:grid; grid-template-columns:130px 1fr; gap:8px 14px; font-size:12.5px}
+  .kv .k{color:var(--muted); text-transform:uppercase; letter-spacing:.06em; font-size:10.5px; padding-top:2px}
+  .tag{display:inline-block; font-size:10.5px; padding:2px 9px; border-radius:999px; margin-right:6px; letter-spacing:.05em; text-transform:uppercase}
+  .tag.good{background:rgba(61,245,160,.09); color:var(--green); border:1px solid rgba(61,245,160,.35)}
+  .tag.bad{background:rgba(255,107,107,.09); color:var(--red); border:1px solid rgba(255,107,107,.35)}
+  .tag.warn{background:rgba(231,185,77,.09); color:var(--gold); border:1px solid rgba(231,185,77,.35)}
+  .tag.cold{color:var(--muted); border:1px solid var(--line2)}
+
+  .feed{list-style:none; padding:0; margin:0}
+  .feed li{border:1px solid var(--line2); border-radius:12px; padding:12px 14px; margin-bottom:10px;
+    background:var(--panel2); font-size:12.5px;}
+  .feed li .h{display:flex; gap:10px; align-items:center; margin-bottom:6px}
+  .feed li .h b{font-family:var(--disp)}
+  .feed li .h time{margin-left:auto; color:var(--muted); font-size:11px}
+  .feed li .refs{display:flex; gap:14px; flex-wrap:wrap; color:var(--muted); font-size:11.5px}
+  .feed .empty{color:var(--muted); padding:8px 0}
+  .note{font-size:12px; color:var(--muted)}
+  .empty-state{color:var(--muted); text-align:center; padding:30px 20px; font-size:13px}
+  .empty-state b{color:var(--ink); font-family:var(--disp); font-size:15px; display:block; margin-bottom:6px}
+  .table-scroll{overflow-x:auto; -webkit-overflow-scrolling:touch}
+  .table-scroll table{min-width:720px}
+  .status-line{min-height:18px; margin-top:10px; color:var(--muted); font-size:11.5px}
+  .status-line.error{color:var(--red)}
+
+  footer{padding:26px 32px; color:var(--muted); font-size:11.5px; text-align:center; border-top:1px solid var(--line2)}
+  footer a{color:var(--muted)} footer a:hover{color:var(--green)}
+  @media (max-width: 960px){
+    main{grid-template-columns:1fr; padding:12px 20px 48px}
+    .env-strip{grid-template-columns:1fr 1fr; margin:16px 20px 4px}
+    .topbar{padding:18px 20px}
+    .console-intro{padding:0 20px; align-items:flex-start; flex-direction:column; gap:12px}
+    .console-intro .signal{align-self:flex-start}
+  }
+  @media (max-width: 560px){
+    .brand{align-items:flex-start}
+    .logo-mark{width:40px; height:40px; font-size:19px; border-radius:10px}
+    .wordmark{font-size:21px}
+    .tagline{font-size:10.5px; line-height:1.35; max-width:190px}
+    .chips{width:100%; margin-left:0}
+    .env-strip{grid-template-columns:1fr; margin:14px 16px 0}
+    main{padding-left:16px; padding-right:16px}
+    .card{padding:18px 16px}
+    .row{flex-direction:column; gap:0}
+    .feed li .h{align-items:flex-start; flex-wrap:wrap; gap:6px}
+    .feed li .h time{width:100%; margin-left:0}
+  }
+</style>
+</head>
+<body>
+
+<div id="banners"></div>
+
+<div class="topbar">
+  <a class="brand" href="/" aria-label="Praetor home">
+    <svg class="logo-mark" viewBox="0 0 200 200" aria-label="Praetor logo" role="img">
+      <defs><linearGradient id="dashboard-logo-gradient" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7cffb2"/><stop offset="1" stop-color="#22d3ee"/></linearGradient></defs>
+      <g transform="rotate(-18 100 100)">
+        <path d="M60 132 A56 56 0 1 1 150 78" fill="none" stroke="url(#dashboard-logo-gradient)" stroke-width="12" stroke-linecap="round"/>
+        <circle cx="150" cy="78" r="13" fill="#7cffb2"/><circle cx="100" cy="100" r="24" fill="none" stroke="#7cffb2" stroke-width="6"/><circle cx="100" cy="100" r="10" fill="#7cffb2"/>
+      </g>
+    </svg>
+    <div class="wordmark">PRAETOR<span class="dot">.</span></div>
+    <div class="tagline">Operator console · reputation-aware agent coordinator</div>
+  </a>
+  <div class="chips" id="stack-chips"></div>
+</div>
+
+<section class="console-intro">
+  <div>
+    <div class="eyebrow">Live control plane</div>
+    <h1>Route work with evidence.</h1>
+    <p>Route reputation-aware assignments, register workers, and inspect every settlement reference from a single control plane.</p>
+  </div>
+  <div class="signal"><span class="live-dot"></span>Online</div>
+</section>
+
+<section class="env-strip" id="env"></section>
+
+<main>
+  <!-- LEFT — register / manage workers -->
+  <section class="card">
+    <h2>Workers <span class="sub">registered on Sibyl Memory</span></h2>
+    <div id="worker-list"></div>
+
+    <details style="margin-top:16px">
+      <summary style="cursor:pointer; color:var(--green); font-family:var(--disp); font-size:13px; letter-spacing:.03em">+ register a worker</summary>
+      <div style="margin-top:12px">
+        <label>Name</label>
+        <input type="text" id="w-name" placeholder="risk-analyst-mainnet" />
+        <label>Capabilities <span style="color:var(--dim); text-transform:none">(comma-separated)</span></label>
+        <input type="text" id="w-caps" placeholder="risk, audit" />
+        <div class="row">
+          <div>
+            <label>Payment wallet</label>
+            <input type="text" id="w-wallet" placeholder="0x…" />
+          </div>
+          <div>
+            <label>ACP agent id / keyword</label>
+            <input type="text" id="w-acp" placeholder="risk-reviewer" />
+          </div>
+        </div>
+        <label>Max job value <span style="color:var(--dim); text-transform:none">(USDC, blank = no limit)</span></label>
+        <input type="number" id="w-max" step="0.1" min="0" />
+        <div class="actions">
+          <button class="primary" id="w-save">Save worker</button>
+        </div>
+        <div id="w-msg" class="note" style="margin-top:8px"></div>
+      </div>
+    </details>
+  </section>
+
+  <!-- RIGHT — submit a job -->
+  <section class="card">
+    <h2>Submit a job</h2>
+    <label>Task</label>
+    <input type="text" id="j-task" placeholder="Review a Base lending protocol" />
+    <div class="row">
+      <div>
+        <label>Category</label>
+        <input type="text" id="j-cat" value="risk" />
+      </div>
+      <div>
+        <label>Value (USDC)</label>
+        <input type="number" id="j-val" value="0" step="0.5" min="0" />
+      </div>
+    </div>
+    <div class="actions">
+      <button class="primary" id="j-run">Route &amp; run</button>
+    </div>
+    <div id="j-result" style="display:none; margin-top:14px"></div>
+  </section>
+
+  <!-- WIDE — Sibyl memory -->
+  <section class="card wide">
+    <h2>Sibyl Memory <span class="sub">the five-tier store every routing decision loads on</span></h2>
+    <div id="mem-tiers" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px"></div>
+    <div id="mem-body" style="display:grid; grid-template-columns:1fr 1fr; gap:20px"></div>
+    <div style="margin-top:18px">
+      <label>Search across memory <span style="color:var(--dim); text-transform:none">(workers · events · receipts · state)</span></label>
+      <div class="row" style="align-items:center">
+        <div style="flex:3"><input type="text" id="mem-q" placeholder="e.g. liquidity, a worker name, or a job id" /></div>
+        <div style="flex:0 0 auto"><button class="ghost" id="mem-search-btn">Search</button></div>
+      </div>
+      <div id="mem-results" style="margin-top:12px"></div>
+    </div>
+  </section>
+
+  <!-- WIDE — activity -->
+  <section class="card wide">
+    <h2>Activity <span class="sub">recent jobs (most recent first)</span></h2>
+    <ul class="feed" id="feed"><li class="empty">No jobs yet.</li></ul>
+  </section>
+</main>
+
+<footer>
+  Praetor · Sibyl Memory + Base + Virtuals ACP
+  · <a href="https://docs.sibyllabs.org" target="_blank">docs.sibyllabs.org</a>
+  · <a href="https://github.com/drained69/Praetor" target="_blank" rel="noreferrer" aria-label="Praetor GitHub repository"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" style="vertical-align:-3px;fill:currentColor"><path d="M12 .5a12 12 0 0 0-3.79 23.39c.6.11.82-.26.82-.58v-2.04c-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.74.08-.74 1.2.09 1.83 1.23 1.83 1.23 1.07 1.83 2.8 1.3 3.48.99.11-.77.42-1.3.76-1.6-2.67-.3-5.47-1.34-5.47-5.95 0-1.31.47-2.38 1.23-3.22-.12-.3-.53-1.52.12-3.17 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.3-1.55 3.3-1.23 3.3-1.23.65 1.65.24 2.87.12 3.17.77.84 1.23 1.91 1.23 3.22 0 4.62-2.8 5.64-5.48 5.94.43.37.81 1.1.81 2.22v3.29c0 .32.22.69.83.57A12 12 0 0 0 12 .5Z"/></svg> GitHub</a>
+  · <span id="mb">memory: —</span>
+</footer>
+
+<script>
+const $ = (id) => document.getElementById(id);
+async function jget(u){
+  let r;
+  try {
+    r = await fetch(u);
+  } catch (e) {
+    throw new Error('Praetor is unreachable. Check that the server is running.');
+  }
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.detail || `HTTP ${r.status}`);
+  return j;
+}
+
+let ADMIN_TOKEN = localStorage.getItem('praetor.admin_token') || '';
+let LAST_HEALTH = null;
+const FEED = [];
+
+function ehtml(s){return String(s ?? '').replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));}
+
+async function jpost(u, body){
+  const headers = {'Content-Type':'application/json'};
+  if (ADMIN_TOKEN) headers['X-Admin-Token'] = ADMIN_TOKEN;
+  const r = await fetch(u, {method:'POST', headers, body: JSON.stringify(body || {})});
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.detail || `HTTP ${r.status}`);
+  return j;
+}
+async function jdel(u){
+  const headers = {};
+  if (ADMIN_TOKEN) headers['X-Admin-Token'] = ADMIN_TOKEN;
+  const r = await fetch(u, {method:'DELETE', headers});
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.detail || `HTTP ${r.status}`);
+  return j;
+}
+
+function chip(label, on, mode){
+  const cls = on ? 'chip on' : 'chip off';
+  return `<span class="${cls}"><span class="dotpulse"></span><b>${ehtml(label)}</b> ${ehtml(mode)}</span>`;
+}
+
+function refLink(label, value, base){
+  if(!value) return '';
+  let out = value;
+  const isTxHash = /^0x?[0-9a-fA-F]{64}$/.test(value);
+  if(base?.explorer && isTxHash){
+    const clean = value.startsWith('0x') ? value : '0x' + value;
+    out = `<a href="${ehtml(base.explorer)}/tx/${ehtml(clean)}" target="_blank">${ehtml(clean.slice(0,10))}…${ehtml(clean.slice(-6))}</a>`;
+  } else if(value.startsWith('acp:')){
+    out = `<a href="https://app.virtuals.io/acp/jobs/${ehtml(value.split(':').pop())}" target="_blank">${ehtml(value)}</a>`;
+  } else if(value.startsWith('dryrun:')){
+    out = `<span title="${ehtml(value)}">dry-run · gas estimated</span>`;
+  } else {
+    out = ehtml(value);
+  }
+  return `<span><b>${ehtml(label)}:</b> ${out}</span>`;
+}
+
+function traceExplanation(trace){
+  if(!trace || !trace.candidates?.length) return '';
+  const hits = trace.candidates.filter(c => c.semantic_hit);
+  const chosen = trace.candidates.find(c => c.chosen);
+  if(hits.length === 0){
+    return `<span class="note">Semantic search found no past failures related to this task.</span>`;
+  }
+  const names = hits.map(c => c.name).join(', ');
+  return `<span class="note" style="color:var(--gold)"><b>Semantic downweight:</b> ${ehtml(names)} previously failed on similar work — routed to <b>${ehtml(chosen?.name || '?')}</b> instead.</span>`;
+}
+
+// ============================================================ BANNERS
+function renderBanners(h){
+  const op = h.operator || {};
+  const parts = [];
+  if(op.mainnet){
+    parts.push(`<div class="banner danger"><b>Mainnet</b> · Base chain 8453 — every routed job settles USDC on-chain from the configured signer. Review each submission carefully.</div>`);
+  }
+  if(!op.admin_token_required){
+    parts.push(`<div class="banner warn"><b>Admin token is not configured.</b> Any visitor to this URL can register workers and submit jobs. Set <code>PRAETOR_ADMIN_TOKEN</code> before exposing this server to the public.</div>`);
+  } else if(!ADMIN_TOKEN){
+    parts.push(`<div class="banner warn"><b>Admin token required to make changes.</b> <input id="tok" type="password" style="width:260px; display:inline-block; margin-left:8px; padding:6px 10px; background:transparent; color:var(--ink); border:1px solid rgba(255,138,91,.5); border-radius:6px" placeholder="X-Admin-Token" />
+      <button class="ghost" onclick="const v=document.getElementById('tok').value.trim(); if(v){localStorage.setItem('praetor.admin_token', v); location.reload();}">Unlock</button></div>`);
+  }
+  $('banners').innerHTML = parts.join('');
+}
+
+// ============================================================ ENV STRIP
+function renderEnv(h){
+  const b = h.base || {}, v = h.virtuals || {};
+  const isMainnet = b.chain_id === 8453;
+  const chainLabel = isMainnet ? 'Mainnet' : (b.chain_id === 84532 ? 'Sepolia' : 'Chain');
+  const base_v = b.configured
+    ? `<div class="v">${ehtml(chainLabel)} <span style="color:var(--muted); font-size:14px">· ${ehtml(b.chain_id)}</span></div>
+       <div class="sub">Block ${ehtml(b.block_number)} · ${b.can_broadcast?'<span class="tag good">broadcast-ready</span>':'<span class="tag warn">dry-run</span>'}</div>`
+    : `<div class="v" style="color:var(--muted)">Offline</div><div class="sub">${ehtml(b.error||'Base is not configured.')}</div>`;
+  const virt_v = v.configured
+    ? `<div class="v">Live <span style="color:var(--muted); font-size:14px">· ${ehtml(v.backend||'')}</span></div>
+       <div class="sub">${ehtml(v.agent_name||v.agent_wallet||'Agent connected')}</div>`
+    : `<div class="v" style="color:var(--muted)">Offline</div><div class="sub">${ehtml(v.error||'Virtuals ACP is not configured.')}</div>`;
+  const mem_v = `<div class="v">${ehtml(h.memory_backend)}</div>
+                 <div class="sub">${h.memory_backend==='sibyl'?'Durable across restarts and deployments':'Ephemeral — a restart wipes all state'}</div>`;
+  const signer = b.sender || '';
+  const signer_v = signer
+    ? `<div class="v" style="font-size:16px">${ehtml(signer.slice(0,6))}…${ehtml(signer.slice(-4))}</div>
+       <div class="sub">Signs and broadcasts USDC on Base</div>`
+    : `<div class="v" style="color:var(--muted)">Not configured</div>
+       <div class="sub">No signer key is set — all Base activity runs in dry-run mode.</div>`;
+  $('env').innerHTML = `
+    <div class="tile"><div class="k">Memory</div>${mem_v}</div>
+    <div class="tile"><div class="k">Base</div>${base_v}</div>
+    <div class="tile"><div class="k">Virtuals</div>${virt_v}</div>
+    <div class="tile"><div class="k">Signer</div>${signer_v}</div>`;
+}
+
+// ============================================================ CHIPS
+function renderChips(h){
+  const op = h.operator || {};
+  const memChip = chip('Memory', h.memory_backend==='sibyl', `· ${h.memory_backend}`);
+  const baseChip = chip('Base', !!h.base?.configured, h.base?.configured ? `· chain ${h.base.chain_id}` : '· off');
+  const virtChip = chip('Virtuals', !!h.virtuals?.configured, h.virtuals?.configured ? `· ${h.virtuals.backend||''}` : '· off');
+  const opChip = op.mainnet ? `<span class="chip mainnet"><span class="dotpulse"></span><b>mainnet</b></span>` : '';
+  $('stack-chips').innerHTML = memChip + baseChip + virtChip + opChip;
+}
+
+// ============================================================ WORKERS
+function renderWorkers(workers){
+  if(!workers.length){
+    $('worker-list').innerHTML = `<div class="empty-state"><b>No workers registered yet.</b>Register your first worker below. Its profile and job history persist in Sibyl Memory across restarts and deployments.</div>`;
+    return;
+  }
+  $('worker-list').innerHTML = `<div class="table-scroll"><table>
+    <thead><tr><th>Name</th><th>Capabilities</th><th>Reliability</th><th>Succ</th><th>Fail</th><th>Status</th><th></th></tr></thead>
+    <tbody>${workers.map(w => {
+      const total = w.successes + w.failures;
+      const rel = total === 0 ? '<span style="color:var(--muted)">—</span>' : `${(w.reliability*100).toFixed(0)}%`;
+      const status = w.requires_review
+        ? '<span class="tag bad">review</span>'
+        : total === 0 ? '<span class="tag cold">cold-start</span>' : '<span class="tag good">trusted</span>';
+      return `<tr>
+        <td><b>${ehtml(w.name)}</b>${w.wallet?`<div class="mono" style="color:var(--muted); font-size:10.5px">${ehtml(w.wallet)}</div>`:''}</td>
+        <td class="n">${ehtml(w.capabilities.join(', '))}</td>
+        <td>${rel}</td>
+        <td class="n">${w.successes}</td>
+        <td class="n">${w.failures}</td>
+        <td>${status}</td>
+        <td><button class="icon-btn" onclick="removeWorker('${ehtml(w.name)}')">delete</button></td>
+      </tr>`;
+    }).join('')}</tbody></table></div>`;
+}
+
+async function removeWorker(name){
+  if(!confirm(`Remove worker "${name}"?\n\nHistorical events remain in Sibyl Memory; the worker will no longer be considered for routing.`)) return;
+  try {
+    await jdel(`/api/workers/${encodeURIComponent(name)}`);
+    await refresh();
+  } catch (e) {
+    alert('Removal failed: ' + e.message);
+  }
+}
+
+// ============================================================ REGISTER
+$('w-save').onclick = async () => {
+  const btn = $('w-save'); btn.disabled = true;
+  try {
+    const name = $('w-name').value.trim();
+    const caps = $('w-caps').value.split(',').map(s => s.trim()).filter(Boolean);
+    if(!name || caps.length === 0){
+      $('w-msg').innerHTML = `<span class="tag bad">Missing</span> A name and at least one capability are required.`;
+      return;
+    }
+    const payload = {
+      name, capabilities: caps,
+      wallet: $('w-wallet').value.trim(),
+      acp_agent: $('w-acp').value.trim(),
+      max_value_usdc: $('w-max').value ? parseFloat($('w-max').value) : null,
+    };
+    const r = await jpost('/api/workers', payload);
+    $('w-msg').innerHTML = `<span class="tag good">${r.created?'registered':'updated'}</span> ${ehtml(r.worker.name)}`;
+    $('w-name').value = ''; $('w-caps').value = ''; $('w-wallet').value = ''; $('w-acp').value = ''; $('w-max').value = '';
+    await refresh();
+  } catch (e) {
+    $('w-msg').innerHTML = `<span class="tag bad">error</span> ${ehtml(e.message)}`;
+  } finally {
+    btn.disabled = false;
+  }
+};
+
+// ============================================================ SUBMIT
+$('j-run').onclick = async () => {
+  const btn = $('j-run'); btn.disabled = true;
+  const box = $('j-result'); box.style.display = 'block';
+  try {
+    const task = $('j-task').value.trim();
+    if(!task) throw new Error('A task description is required.');
+    const req = {
+      task, category: $('j-cat').value.trim() || 'risk',
+      value_usdc: parseFloat($('j-val').value) || 0,
+    };
+    const health = LAST_HEALTH || (await jget('/api/health'));
+    if(health.operator?.mainnet && req.value_usdc > 0){
+      if(!confirm(`Confirm mainnet settlement\n\nThis job will settle ${req.value_usdc} USDC on Base mainnet from the configured signer if verification succeeds.\n\nProceed?`)) throw new Error('Cancelled by operator.');
+    }
+    const out = await jpost('/api/jobs', req);
+    const okTag = out.success ? '<span class="tag good">success</span>' : '<span class="tag bad">failed</span>';
+    const vTag = out.verified ? '<span class="tag good">verified</span>' : '<span class="tag bad">unverified</span>';
+    box.innerHTML = `${okTag}${vTag}
+      <div class="kv" style="margin-top:10px">
+        <div class="k">Routed to</div><div><b>${ehtml(out.routed_to)}</b></div>
+        ${out.reason?`<div class="k">Reason</div><div class="mono" style="color:var(--muted)">${ehtml(out.reason)}</div>`:''}
+        ${out.acp_reference?`<div class="k">ACP job</div><div class="mono">${ehtml(out.acp_reference)}</div>`:''}
+        ${out.payment_reference?`<div class="k">Base payment</div><div class="mono">${ehtml(out.payment_reference)}</div>`:''}
+      </div>
+      <div style="margin-top:12px">${traceExplanation(out.routing_trace)}</div>`;
+    pushFeed({
+      ts: new Date().toLocaleTimeString(),
+      task: req.task, routed_to: out.routed_to, success: out.success, verified: out.verified,
+      reason: out.reason, acp_reference: out.acp_reference, payment_reference: out.payment_reference,
+      trace: out.routing_trace,
+    });
+    await refresh();
+  } catch (e) {
+    box.innerHTML = `<span class="tag bad">error</span> ${ehtml(e.message)}`;
+  } finally {
+    btn.disabled = false;
+  }
+};
+
+// ============================================================ FEED
+function pushFeed(entry){
+  FEED.unshift(entry); FEED.splice(10);
+  const html = FEED.map(e => {
+    const okTag = e.success ? '<span class="tag good">success</span>' : '<span class="tag bad">failed</span>';
+    const vTag = e.verified ? '<span class="tag good">verified</span>' : '<span class="tag bad">unverified</span>';
+    return `<li>
+      <div class="h">${okTag}${vTag}<b>${ehtml(e.routed_to)}</b>
+        <span class="mono" style="color:var(--muted)"> · ${ehtml(e.task)}</span>
+        <time>${ehtml(e.ts)}</time></div>
+      ${e.reason ? `<div class="note">reason: ${ehtml(e.reason)}</div>` : ''}
+      ${e.trace ? `<div class="note" style="margin-top:4px">${traceExplanation(e.trace)}</div>` : ''}
+      <div class="refs">
+        ${refLink('Virtuals job', e.acp_reference)}
+        ${refLink('Base payment', e.payment_reference, LAST_HEALTH?.base)}
+      </div>
+    </li>`;
+  }).join('');
+  $('feed').innerHTML = html || '<li class="empty">No jobs yet.</li>';
+}
+
+// ============================================================ MEMORY
+function renderMemory(h){
+  const mem = h.memory || {};
+  const tiers = mem.tiers || {};
+  const tierLabels = {warm:'WARM · entities', cold:'COLD · events', hot:'HOT · state', reference:'REFERENCE · receipts', search:'SEARCH · semantic'};
+  $('mem-tiers').innerHTML = Object.keys(tierLabels)
+    .filter(k => k in tiers)
+    .map(k => `<span class="tag good" title="${ehtml(tiers[k])}">${tierLabels[k]}</span>`)
+    .join('');
+
+  const stats = mem.stats || {};
+  const statCell = (label, val) => `<div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--line2)"><span class="k" style="text-transform:uppercase; letter-spacing:.06em; font-size:10.5px; color:var(--muted)">${label}</span><b>${val ?? 0}</b></div>`;
+  const statsHtml = `<div>
+    <div class="k" style="text-transform:uppercase; letter-spacing:.1em; font-size:10.5px; color:var(--muted); margin-bottom:8px">Live counters (HOT tier)</div>
+    ${statCell('Jobs total', stats.jobs_total)}
+    ${statCell('Succeeded', stats.jobs_succeeded)}
+    ${statCell('Failed', stats.jobs_failed)}
+    ${statCell('Settlements', stats.settlements)}
+  </div>`;
+
+  const st = mem.storage || {};
+  let storeHtml;
+  if(st.pct_used !== undefined){
+    const pct = Math.min(100, Math.round((st.pct_used || 0) * (st.pct_used <= 1 ? 100 : 1)));
+    storeHtml = `<div>
+      <div class="k" style="text-transform:uppercase; letter-spacing:.1em; font-size:10.5px; color:var(--muted); margin-bottom:8px">Storage (${ehtml(st.tier||'free')} tier)</div>
+      <div style="height:8px; background:#10251a; border-radius:5px; overflow:hidden"><div style="width:${pct}%; height:100%; background:var(--green)"></div></div>
+      <div class="sub" style="margin-top:8px; color:var(--muted); font-size:12px">${((st.db_size_bytes||0)/1024).toFixed(1)} KB used · ${pct}% of cap${st.uncapped?' (uncapped)':''}</div>
+    </div>`;
+  } else {
+    storeHtml = `<div>
+      <div class="k" style="text-transform:uppercase; letter-spacing:.1em; font-size:10.5px; color:var(--muted); margin-bottom:8px">Storage</div>
+      <div class="sub" style="color:var(--muted); font-size:12px">${ehtml(st.entities ?? 0)} entities · ${ehtml(st.events ?? 0)} events · ${ehtml(st.references ?? 0)} receipts · ${ehtml(st.backend||mem.backend||'in-memory')}</div>
+    </div>`;
+  }
+  $('mem-body').innerHTML = statsHtml + storeHtml;
+}
+
+async function runMemorySearch(){
+  const q = $('mem-q').value.trim();
+  const box = $('mem-results');
+  if(!q){ box.innerHTML = ''; return; }
+  box.innerHTML = `<div class="note">Searching…</div>`;
+  try {
+    const out = await jget('/api/search?q=' + encodeURIComponent(q));
+    if(!out.results.length){ box.innerHTML = `<div class="note">No matches across any tier.</div>`; return; }
+    box.innerHTML = `<div class="table-scroll"><table>
+      <thead><tr><th>Tier</th><th>Name / key</th><th>Detail</th></tr></thead>
+      <tbody>${out.results.map(r => `<tr>
+        <td><span class="tag ${r.tier==='warm'?'good':r.tier==='reference'?'warn':'cold'}">${ehtml(r.tier||'—')}</span></td>
+        <td class="mono">${ehtml(r.name||'—')}</td>
+        <td class="mono" style="color:var(--muted)">${ehtml(JSON.stringify(r.body||'').slice(0,90))}</td>
+      </tr>`).join('')}</tbody></table></div>`;
+  } catch (e) {
+    box.innerHTML = `<span class="tag bad">error</span> ${ehtml(e.message)}`;
+  }
+}
+
+// ============================================================ REFRESH
+async function refresh(){
+  try {
+    const [h, s] = await Promise.all([jget('/api/health'), jget('/api/state')]);
+    LAST_HEALTH = h;
+    renderBanners(h);
+    renderEnv(h);
+    renderChips(h);
+    renderWorkers(s.workers);
+    renderMemory(h);
+    $('mb').textContent = 'memory: ' + h.memory_backend;
+  } catch (e) {
+    $('banners').innerHTML = `<div class="banner danger"><b>Dashboard unavailable.</b> ${ehtml(e.message || 'Could not load Praetor state.')}</div>`;
+  }
+}
+
+$('mem-search-btn').onclick = runMemorySearch;
+$('mem-q').addEventListener('keydown', (e) => { if(e.key === 'Enter') runMemorySearch(); });
+
+refresh();
+setInterval(refresh, 20000);
+</script>
+</body>
+</html>

@@ -1,13 +1,13 @@
 """Virtuals ACP client backed by the official ``acp`` CLI.
 
-This is an alternate implementation of :class:`sibyl_relay.partners.ACPClient`
+This is an alternate implementation of :class:`praetor.partners.ACPClient`
 for the common case where the agent's ACP v2 smart account has not been
 deployed yet, or the Python SDK is not usable on the current interpreter.
 
 The CLI (``@virtuals-protocol/acp-cli``) authenticates once with
 ``acp configure`` and stores credentials in the OS keychain. All subsequent
 signing uses a signer wallet the operator whitelisted through the ACP
-dashboard, so no signing key is passed to Sibyl Relay.
+dashboard, so no signing key is passed to Praetor.
 
 - :meth:`status` shells out to ``acp agent whoami`` and returns the active
   agent's real name and wallet address — proving the CLI is authenticated as

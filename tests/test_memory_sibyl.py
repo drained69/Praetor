@@ -12,8 +12,8 @@ import pytest
 
 pytest.importorskip("sibyl_memory_client")
 
-from sibyl_relay.core import Coordinator, Job, JobResult, WorkerProfile
-from sibyl_relay.memory import SibylMemoryStore
+from praetor.core import Coordinator, Job, JobResult, WorkerProfile
+from praetor.memory import SibylMemoryStore
 
 
 def _store():
@@ -99,3 +99,29 @@ def test_memory_backed_routing_survives_a_fresh_coordinator():
     ).run(Job("second review", "risk"))
     assert result.worker == "risk-reviewer-v2"
     assert result.success is True
+
+
+def test_semantic_search_over_failure_notes_via_real_sibyl(tmp_path):
+    """The fourth primitive: FTS5-backed semantic search that only surfaces
+    workers whose STORED failure notes overlap with the query — clean workers
+    matching on other fields are not falsely flagged."""
+    store = SibylMemoryStore(str(tmp_path / "sem.db"))
+    store.save_worker({
+        "name": "atlas", "capabilities": ["risk"], "wallet": "", "acp_agent": "",
+        "max_value_usdc": None,
+        "successes": 5, "failures": 1, "requires_review": False,
+        "failure_notes": ["missed liquidity-lock evidence on Base lending review"],
+    })
+    store.save_worker({
+        "name": "clean", "capabilities": ["risk"], "wallet": "", "acp_agent": "",
+        "max_value_usdc": None,
+        "successes": 4, "failures": 0, "requires_review": False,
+        "failure_notes": [],
+    })
+
+    hits_related = store.search_similar_failure_workers("audit a liquidity-lock in a stablecoin")
+    assert "atlas" in hits_related, "atlas's failure notes should match"
+    assert "clean" not in hits_related, "no failure notes -> never a hit"
+
+    hits_unrelated = store.search_similar_failure_workers("check oracle staleness")
+    assert "atlas" not in hits_unrelated, "unrelated task should NOT surface atlas"

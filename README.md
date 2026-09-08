@@ -1,295 +1,229 @@
-# Sibyl Relay
+# Praetor
 
-## Memory-backed coordination for autonomous agents
+### Memory-backed coordination for autonomous agents
 
-Sibyl Relay is an agent coordinator that learns from execution history. It
-routes work to specialist agents, records what happened, and changes future
-delegation decisions when an agent has previously failed.
+**Praetor remembers which agents earned trust, then uses that memory to decide who gets the
+next job.**
 
-> **Core idea:** Agent economies need more than identity and payment. They need
-> persistent memory of what each agent actually did.
+Praetor is a coordinator for agent workflows. It matches tasks to specialist workers, records
+assignments and outcomes in [Sibyl Memory](https://docs.sibyllabs.org/), and changes future
+routing when a worker has failed before. The decision survives a process restart because the
+worker's operational history is durable, not held in a transient in-process cache.
 
-## Why Relay exists
+> Identity and payment tell an agent economy *who* can work and *how* to settle. Praetor adds
+> the missing layer: evidence of what each worker actually did.
 
-Most agent orchestration systems select workers from static descriptions:
+**[Live dashboard](http://127.0.0.1:8000)** · [Install](#install) · [Quick start](#quick-start) ·
+[How it works](#how-it-works) · [Integrations](#integrations) · [Deletion test](#deletion-test) ·
+[Development](#development)
 
-```text
-"This agent says it can perform risk analysis, so assign it the task."
-```
+## Install
 
-Relay adds operational memory:
-
-```text
-"This agent previously missed liquidity-lock evidence on a similar review.
-Assign discovery to it only, and route final verification to another agent."
-```
-
-That decision survives a process restart because it is stored in Sibyl Memory,
-not in the coordinator's transient state.
-
-## Current status
-
-### Complete
-
-- Memory-backed worker profiles and capability matching
-- Persistent success, failure, and failure-note tracking
-- Fresh-session routing based on previously persisted outcomes
-- Durable job assignment and completion events
-- Real local SQLite integration through `sibyl-memory-client` 0.8.x
-- Deterministic in-memory test implementation
-- **Real Base USDC client** (`web3`) — connects to the live Base chain, resolves
-  Circle's USDC contract, and validates/gas-estimates a real transfer. Dry-run
-  by default (no key needed); broadcasts when a signing key is supplied.
-- **Real Virtuals ACP client** (`virtuals-acp` SDK) — resolves a provider agent
-  and calls `initiate_job` on-chain, returning a durable ACP job reference.
-- **Live product: dashboard + REST API** (`FastAPI`) showing routing evidence,
-  worker reputation reconstructed from memory, live Base chain status, and
-  partner references, with a one-click deletion test.
-- Verification-before-settlement safety gate
-- Durable ACP and payment references in job events
-- Provider failure handling with persisted audit outcomes
-- Executable `--deletion-test` routing comparison
-- Automated unit tests (including end-to-end API tests) and a live Base test
-- MIT project license declaration
-
-### What still needs the deployer's own credentials
-
-The clients are real; moving them from *validated* to *broadcast* requires
-secrets that must never live in the repo:
-
-- A funded Base key (`BASE_PRIVATE_KEY`) to broadcast USDC settlement. Without
-  it, Base runs in **dry-run**: it connects to the live chain, resolves the real
-  USDC contract, reads its decimals, and simulates the exact
-  `transfer(recipient, amount)` against live state using an `eth_call` state
-  override (so it validates correctly even when the recipient — a worker being
-  paid — holds no USDC yet). If the node lacks state-override support the client
-  degrades to read-only validation rather than reporting a false failure, and a
-  genuine revert (paused token, blacklisted recipient) is always surfaced. This
-  is real work, and the code never pretends a broadcast happened — the reference
-  is prefixed `dryrun:` and the receipt's `live` flag is `False`.
-- A Virtuals ACP buyer-agent wallet + whitelisted key (and Python 3.10–3.12,
-  which the `virtuals-acp` SDK requires) to submit a live ACP job.
-- Production hardening: authentication, rate limiting, and deployment config.
-
-The repository does **not** pretend that a payment or ACP job occurred when no
-live client is configured. This is important for the hackathon's requirement
-that partner integrations perform real work rather than being decorative.
-
-## Live product (dashboard + API)
-
-Run the coordinator as a live web product:
+Python 3.10 or newer is supported. The server extra includes the dashboard dependencies.
 
 ```bash
-.venv/bin/pip install -e '.[server]'
-.venv/bin/sibyl-relay-server           # http://127.0.0.1:8000
+git clone <your-repository-url> praetor
+cd praetor
+python3 -m venv .venv
+.venv/bin/pip install -e '.[dev,server]'
 ```
 
-The dashboard lets you submit a job and watch the routing decision, inject a
-worker failure to seed memory, then run again clean and see the coordinator
-avoid the flagged worker. With `BASE_RPC_URL` set (Base Sepolia by default) it
-shows the live chain block height and produces a real USDC settlement reference
-per job. Point `SIBYL_RELAY_DB` at a Sibyl database to make reputation durable
-across restarts.
+The package is named `praetor`, and its commands are `praetor` and `praetor-server`. The
+underlying Python import namespace remains `praetor` for compatibility with the current
+source layout and existing consumers.
 
-REST endpoints: `GET /api/health`, `GET /api/state`, `POST /api/jobs`,
-`POST /api/deletion-test`.
+## Quick Start
 
-`GET /api/health` also returns a `builder_score` block that mirrors the
-hackathon rubric: the mandatory Sibyl Memory foundation, the number of
-**verified** partner stacks, and the resulting multiplier (`x1.00` / `x1.15` /
-`x1.25`). A stack is counted only when it is observed doing real work — Base
-when the client actually connected and read the live USDC contract, Virtuals
-when its ACP client is active — so the score reflects genuine integration, not
-constructed adapters.
-
-Configuration is environment-driven and a `.env` file is loaded automatically
-(found by walking up from the working directory), so you never have to `export`
-anything. Copy `.env.example` to `.env` and fill in the stacks you want to
-activate:
+Run the deterministic memory demonstration. It needs no credentials or network access:
 
 ```bash
-cp .env.example .env      # then paste your keys into .env
-```
-
-`.env` is gitignored. Real environment variables that are already set take
-precedence over the file, and `SIBYL_RELAY_NO_PARTNERS=1` disables partner
-wiring entirely (used by the tests). Adding `BASE_PRIVATE_KEY` flips Base from
-dry-run to live broadcast; adding the `VIRTUALS_*` keys activates ACP.
-
-## Demonstration
-
-The included demo shows the central product behavior:
-
-1. Session one runs a risk-review task with `risk-reviewer-v1`.
-2. The worker fails and Relay persists the failure in Sibyl Memory.
-3. The coordinator process is recreated.
-4. Session two receives a similar task.
-5. Relay recalls the prior failure and routes the task to `risk-reviewer-v2`.
-
-Run the deterministic demo without credentials:
-
-```bash
-PYTHONPATH=src python3 -m sibyl_relay
+.venv/bin/python -m praetor
 ```
 
 Expected output:
 
 ```text
 Fresh session routed to: risk-reviewer-v2
+Verification: passed
 Outcome: success
 ```
 
-Run the explicit deletion-test comparison:
+The demo performs two sessions:
+
+1. `risk-reviewer-v1` fails to provide critical evidence.
+2. Praetor persists that failure in memory.
+3. A fresh coordinator is created.
+4. A similar task is routed to `risk-reviewer-v2`.
+
+Run the explicit comparison between remembered and empty state:
 
 ```bash
-.venv/bin/python -m sibyl_relay --deletion-test
+.venv/bin/praetor --deletion-test
 ```
 
-This compares a store containing a remembered failure with a fresh empty
-store. It is the shortest local demonstration that memory changes routing.
+## Live Product
 
-## Real Sibyl Memory
-
-Relay uses the public Sibyl Memory API documented at
-<https://docs.sibyllabs.org/>:
-
-- `MemoryClient.local(...)`
-- `set_entity(...)`
-- `get_entity(...)`
-- `list_entities(...)` — used to enumerate all workers in the `relay_worker`
-  category (the documented enumeration primitive; `search_entities` is FTS-paged
-  and would truncate)
-- `search_entities(...)`
-- `write_event(...)`
-- `read_events(...)`
-
-Install the client:
+Start the FastAPI dashboard locally:
 
 ```bash
-python3 -m venv .venv
-.venv/bin/pip install -e '.[dev]'
-.venv/bin/pip install sibyl-memory-client
+.venv/bin/praetor-server
 ```
 
-If account activation is required by the local Sibyl installation, run the
-documented commands separately:
+Open <http://127.0.0.1:8000>. The dashboard lets you submit a risk job, inject a worker
+failure, inspect the resulting reputation, and run the deletion test. It also reports live
+Base status and partner references when those integrations are configured.
+
+REST endpoints:
+
+| method | endpoint | purpose |
+|---|---|---|
+| `GET` | `/api/health` | Memory, partner, and builder-score status |
+| `GET` | `/api/state` | Worker profiles reconstructed from memory |
+| `POST` | `/api/jobs` | Route and execute a job |
+| `POST` | `/api/deletion-test` | Prove routing changes when memory is removed |
+
+Example request:
 
 ```bash
-sibyl init
-sibyl health
+curl -X POST http://127.0.0.1:8000/api/jobs \
+  -H 'content-type: application/json' \
+  -d '{"task":"Review a Base lending protocol","category":"risk","value_usdc":1.0}'
 ```
 
-Run Relay against the same local memory database used by Sibyl:
+## Configuration
+
+Configuration is environment-driven. Copy `.env.example` to `.env`; `.env` is gitignored and
+is loaded automatically. Already-exported environment variables take precedence.
+
+```bash
+cp .env.example .env
+```
+
+### Memory
+
+Without a database path, the server uses a deterministic in-memory store. To make reputation
+durable across restarts, point Praetor at the SQLite database used by Sibyl Memory:
 
 ```bash
 export SIBYL_RELAY_DB="$HOME/.sibyl-memory/memory.db"
-.venv/bin/python -m sibyl_relay --db "$SIBYL_RELAY_DB"
+.venv/bin/praetor-server
 ```
 
-For a clean smoke test against a temporary real Sibyl database:
+You can also run the CLI against that database:
 
 ```bash
-.venv/bin/python - <<'PY'
-from tempfile import TemporaryDirectory
-
-from sibyl_relay.core import Coordinator, Job, JobResult, WorkerProfile
-from sibyl_relay.memory import SibylMemoryStore
-
-with TemporaryDirectory() as directory:
-    memory = SibylMemoryStore(directory + "/memory.db")
-
-    def execute(worker, job):
-        failed = worker.name == "bad"
-        return JobResult(
-            worker.name,
-            not failed,
-            "ok" if not failed else "incomplete",
-            "missed critical evidence" if failed else "",
-        )
-
-    Coordinator(memory, [WorkerProfile("bad", ["risk"])], execute).run(
-        Job("first review", "risk")
-    )
-    result = Coordinator(
-        memory,
-        [
-            WorkerProfile("bad", ["risk"]),
-            WorkerProfile("good", ["risk"], successes=4),
-        ],
-        execute,
-    ).run(Job("second review", "risk"))
-    print(result.worker, result.success)
-PY
+.venv/bin/python -m praetor --db "$SIBYL_RELAY_DB"
 ```
 
-Expected result:
+Set `SIBYL_RELAY_NO_PARTNERS=1` for a local run without Base or Virtuals wiring. The variable
+names retain the `SIBYL_RELAY_` prefix because they are part of the existing deployment
+interface.
 
-```text
-good True
-```
+### Optional partner stacks
 
-## Architecture
+The core coordinator works with Sibyl Memory alone. Optional stacks add real external actions:
 
-```text
-              task
-               |
-               v
-       +----------------+
-       |  Coordinator   |
-       | choose + run   |
-       +--------+-------+
-                |
-                | load profile and history
-                v
-       +----------------+
-       | Sibyl Memory   |
-       | WARM entities  |
-       | COLD events    |
-       +--------+-------+
-                |
-                v
-       +----------------+
-       | Specialist     |
-       | worker agent   |
-       +----------------+
-                |
-                | result, failure, evidence
-                +-----------------------> Sibyl Memory
-```
-
-### Memory model
-
-| Relay data | Sibyl tier | Purpose |
+| stack | capability | activation |
 |---|---|---|
-| Worker profile | WARM entity | Capabilities, successes, failures, review status |
-| Job assignment | COLD event | Records who was selected and for which task |
-| Job completion | COLD event | Records success, failure, and reason |
-| Future routing | FTS/entity lookup | Reconstructs durable worker state after restart |
+| **Sibyl Memory** | Durable worker profiles, routing history, and audit events | `SIBYL_RELAY_DB` |
+| **Base** | USDC settlement on Base; dry-run validation without a signing key | `BASE_RPC_URL`, optional `BASE_PRIVATE_KEY` |
+| **Virtuals ACP** | Agent-to-agent job delegation | `VIRTUALS_AGENT_WALLET_ADDRESS`, `VIRTUALS_WHITELISTED_WALLET_PRIVATE_KEY` |
 
-Worker profiles are stored under the `relay_worker` category. An omitted
-`max_value_usdc` means no local limit and is serialized as JSON `null`; the
-coordinator does not use an in-process reputation cache as its source of truth.
+Praetor does not fabricate successful payments or ACP jobs. Base connects to the configured
+chain and validates a transfer in dry-run mode by default. A funded `BASE_PRIVATE_KEY` is
+required before it broadcasts. Virtuals requires a configured buyer agent and supported ACP
+backend. Never commit credentials to the repository.
 
-### Routing behavior
+## How It Works
 
-Relay currently ranks eligible workers by:
+```text
+                 job
+                  |
+                  v
+        +--------------------+
+        |      Praetor       |
+        | match, execute,    |
+        | verify, settle     |
+        +----------+---------+
+                   |
+          load profile + history
+                   v
+        +--------------------+
+        |   Sibyl Memory     |
+        | profiles + events  |
+        +----------+---------+
+                   |
+                   v
+        +--------------------+
+        |  Specialist worker |
+        +--------------------+
+```
 
-1. Workers not marked `requires_review`
-2. Historical reliability
-3. Lower failure count
+Worker selection currently ranks eligible workers by:
 
-A failed result increments the worker's failure count, marks the worker for
-review, and stores the failure reason. The next coordinator instance reads that
-profile from Sibyl before selecting a worker.
+1. Workers that do not require review.
+2. Historical reliability.
+3. Lower failure count.
 
-If configured, Relay delegates to ACP before execution, verifies the returned
-report, and only then settles payment. A failed or unverifiable report never
-reaches the payment adapter.
+Every assignment and completion is recorded. A failed result increments the worker's failure
+count, marks it for review, and stores the reason. The next `Coordinator` instance reads that
+state back from Sibyl Memory before choosing a worker.
 
-## Partner integration boundaries
+### Memory model — all five Sibyl tiers, load-bearing
 
-The core defines two narrow protocols, and `sibyl_relay.integrations` ships real
-clients that satisfy them:
+Praetor is built directly on Sibyl Memory's five-tier hierarchical schema. Every tier does
+real work in the routing loop; remove any one and the product degrades.
+
+| Sibyl tier | Praetor use | API |
+|---|---|---|
+| **WARM** (entities) | Worker profiles — capability, reliability, limits, review status, failure notes | `set_entity` / `get_entity` / `list_entities` / `archive_entity` |
+| **COLD** (events) | Job history — `worker_registered`, `job_assigned`, `job_completed`, `worker_archived` | `write_event` / `read_events` |
+| **HOT** (state) | Live coordinator scoreboard — `coordinator:stats` counters (jobs total / succeeded / failed / settlements) | `set_state` / `get_state` |
+| **REFERENCE** (receipts) | Immutable per-job settlement receipt keyed `receipt:<job_id>` with Base tx + ACP references and verification result | `set_reference` / `get_reference` |
+| **Search** (FTS5) | Task-aware routing (semantic failure downweight) **and** the operator's cross-tier `/api/search` | `search_entities` / `search` |
+
+The coordinator never treats an in-process cache as its source of truth. The memory layer
+is the source of truth — kill the process and every profile, counter, and receipt is
+reconstructed from Sibyl on the next boot.
+
+### How each tier earns its place
+
+1. **Recall (WARM + COLD).** A fresh `Coordinator` against the same Sibyl DB reads each
+   worker's `successes`, `failures`, `requires_review`, and `failure_notes` before its first
+   routing decision. This is the defining behavior — see the [deletion test](#deletion-test).
+2. **Task-aware routing (Search).** Before ranking candidates, the coordinator runs Sibyl's
+   FTS5 search against the current task text. Any worker whose recorded `failure_notes`
+   semantically overlap with the task is *downweighted* — turning flat reputation
+   (*"worker failed once"*) into task-aware reputation (*"worker failed on **this kind** of
+   work"*). The reasoning is returned in `JobResult.routing_trace` and rendered on the
+   dashboard: *"Semantic downweight: atlas previously failed on similar work — routed to
+   nova instead."*
+3. **Live telemetry (HOT).** Every job atomically advances a `coordinator:stats` document in
+   the HOT tier. The dashboard reads it back; it survives restarts.
+4. **Durable receipts (REFERENCE).** Every completed job writes an immutable receipt to the
+   REFERENCE tier (`receipt:<job_id>`) carrying the worker, verification result, Base tx
+   hash, and ACP job id. `GET /api/receipts/{job_id}` looks it up without replaying the
+   event log.
+5. **Audit-preserving retirement (Archive).** Removing a worker calls `archive_entity`, not
+   a hard delete — the entity leaves the active routing set but stays recoverable, and its
+   events and receipts are untouched.
+6. **Storage hygiene.** The dashboard surfaces `free_tier_status` (DB size, % of cap) so an
+   operator can see the memory layer's real footprint.
+
+Reflection (`learn`) and consolidation are available in `sibyl-memory-client` and are the
+natural next layer; Praetor's routing is a deterministic function over the tiers above, so
+it does not depend on them today.
+
+### Verification before settlement
+
+When configured, Praetor can delegate through Virtuals ACP, execute the job, verify the report,
+and settle payment through Base. An unsuccessful or unverifiable result never reaches the
+payment adapter. Partner references are persisted with the completion event and returned in
+the API response.
+
+## Integrations
+
+The core depends on narrow protocols rather than provider-specific logic:
 
 ```python
 class PaymentClient:
@@ -300,94 +234,61 @@ class ACPClient:
     def submit_job(self, agent: str, task: str) -> str: ...
 ```
 
-Real Base settlement (dry-run without a key, live broadcast with one):
+Use the adapters independently or together:
 
 ```python
-from sibyl_relay.integrations import BaseUSDCClient
-from sibyl_relay.partners import BasePaymentAdapter
+from praetor.integrations import BaseUSDCClient
+from praetor.partners import BasePaymentAdapter
 
-payment = BasePaymentAdapter(BaseUSDCClient())        # reads BASE_* env
+payment = BasePaymentAdapter(BaseUSDCClient())
 receipt = payment.pay_worker("0xWorkerWallet", 1.0, "job-id")
-# receipt.reference -> "dryrun:base:84532:..."   (or a real tx hash when live)
-# receipt.live      -> False for dry-run, True after a broadcast
+print(receipt.reference, receipt.live)
 ```
-
-Real Virtuals ACP delegation:
 
 ```python
-from sibyl_relay.integrations import VirtualsACPClient
-from sibyl_relay.partners import VirtualsACPAdapter
+from praetor.integrations import VirtualsACPClient
+from praetor.partners import VirtualsACPAdapter
 
-acp = VirtualsACPAdapter(VirtualsACPClient())         # reads VIRTUALS_* env
+acp = VirtualsACPAdapter(VirtualsACPClient())
 receipt = acp.delegate("risk-reviewer", "perform risk review")
-# receipt.reference -> "acp:84532:<onchain_job_id>"
+print(receipt.reference)
 ```
 
-Both clients **refuse to construct** unless their stack is configured, so a
-decorative integration is impossible. No secret is embedded in the code; the
-clients read Base and Virtuals configuration from the environment and use the
-official provider APIs (`web3` for Base, the `virtuals-acp` SDK for Virtuals).
-When configured, Relay persists their returned references in the COLD completion
-event and exposes them on `JobResult`.
+## Deletion Test
 
-### One stack or both
+Memory is load-bearing by design. The shortest proof is:
 
-The partner stacks are optional and composable:
+```bash
+.venv/bin/praetor --deletion-test
+```
 
-- **Sibyl only** provides persistent memory-backed routing.
-- **Sibyl + Base** adds Base-based worker payments and agentic transactions.
-- **Sibyl + Virtuals** adds Virtuals agent coordination and delegation.
-- **Sibyl + Base + Virtuals** lets Virtuals coordinate the job and Base settle
-  the resulting worker payment.
+The comparison runs the same category with remembered failure state and with an empty store.
+With memory, the flagged worker is avoided. Without memory, that evidence does not exist and
+the worker can be selected again. Removing Sibyl Memory therefore removes Praetor's defining
+risk-aware routing behavior; it is not merely clearing a performance cache.
 
-Base and Virtuals are therefore not an either/or choice. An application may
-configure either adapter independently or call both in the same workflow. Sibyl
-Memory remains the required foundation for the relay's persistent routing.
-
-## Deletion test
-
-Sibyl Memory is load-bearing by design.
-
-To verify it:
-
-1. Run the first session and allow a worker to fail.
-2. Stop the coordinator.
-3. Start a fresh coordinator with the same database.
-4. Submit a similar task.
-5. Observe that the failed worker is avoided.
-6. Repeat with an empty store and observe that the previously failed worker is selected again.
-
-Without Sibyl, Relay loses the worker's failure history and cannot perform
-memory-backed risk-aware routing. The product's defining behavior therefore
-breaks when the memory layer is removed.
-
-## Repository layout
+## Repository Layout
 
 ```text
-src/sibyl_relay/
-├── __init__.py            Public package exports
-├── __main__.py            `python -m sibyl_relay` entry point
-├── cli.py                 Console entry point
+src/praetor/
 ├── core.py                Jobs, worker profiles, and coordinator
-├── demo.py                Two-session demonstration
-├── memory.py              Sibyl and in-memory store implementations
-├── partners.py            PaymentClient/ACPClient protocols + adapters
-├── verification.py        Verification-before-settlement safety gate
-├── api.py                 FastAPI dashboard + REST API (the live product)
-├── web/index.html         Dashboard UI
+├── demo.py                Two-session demo and deletion test
+├── memory.py              Sibyl and in-memory stores
+├── partners.py            Payment and ACP protocols plus adapters
+├── verification.py        Verification-before-settlement gate
+├── api.py                 FastAPI dashboard and REST API
+├── web/index.html         Interactive dashboard
 └── integrations/
-    ├── config.py          Env-driven Base + Virtuals configuration
-    ├── base_payment.py    Real Base USDC client (web3)
-    └── virtuals_acp.py    Real Virtuals ACP client (virtuals-acp SDK)
+    ├── config.py          Environment-driven partner configuration
+    ├── base_payment.py    Base USDC client
+    ├── virtuals_acp.py    Virtuals ACP SDK client
+    └── virtuals_cli.py   Virtuals ACP CLI client
 
-tests/
-├── test_partners.py       Partner adapter tests
-├── test_relay.py          Routing and persistence behavior tests
-├── test_integrations.py   Base/Virtuals config + client guards + live Base test
-└── test_api.py            End-to-end dashboard/API tests
+tests/                     Unit, integration, and API tests
+video/                     Praetor product demo video source
 ```
 
-## Testing
+## Development
 
 Run the automated suite:
 
@@ -395,77 +296,32 @@ Run the automated suite:
 .venv/bin/pytest -q
 ```
 
-Current test coverage includes:
+The tests cover routing persistence, worker discovery, unsupported categories, verification
+gates, payment and ACP receipt handling, partner configuration, provider failures, and the
+end-to-end dashboard flow. Live Base tests are skipped unless explicitly enabled:
 
-- Fresh-session avoidance of a worker with a persisted failure
-- Memory being required for worker discovery and routing
-- Unsupported task categories being rejected
-- Base adapter receipt handling and dry-run vs live reference detection
-- Virtuals ACP adapter receipt handling
-- Provider failures blocking settlement and updating worker reputation
-- Base/Virtuals env configuration and unconfigured-client refusal
-- End-to-end dashboard/API flow (health, state, job routing, deletion test)
-
-The local verification result is:
-
-```text
-25 passed, 2 skipped
+```bash
+RUN_LIVE_BASE=1 .venv/bin/pytest -k 'live_chain or zero_balance'
 ```
 
-The two skipped tests are live Base Sepolia dry-runs (they exercise the real
-chain without broadcasting); run them explicitly with
-`RUN_LIVE_BASE=1 .venv/bin/pytest -k "live_chain or zero_balance"`. The Sibyl
-round-trip tests (`tests/test_memory_sibyl.py`) run against a real temporary
-SQLite store created by `sibyl-memory-client` and prove that `list_workers`
-enumerates every worker via the documented `list_entities` API (not the
-FTS-paged `search_entities`), so routing memory does not silently truncate.
+For a real Sibyl Memory round trip, install the optional client and initialize Sibyl as
+described in the [Sibyl Memory documentation](https://docs.sibyllabs.org/):
 
-## Product roadmap
+```bash
+.venv/bin/pip install -e '.[dev,sibyl]'
+.venv/bin/sibyl init
+.venv/bin/sibyl health
+```
 
-### Remaining integration work
+## Roadmap
 
-- ~~Add a web view showing routing evidence and live references~~ — **done**
-  (FastAPI dashboard)
-- ~~Real Base settlement path~~ — **done** as a dry-run client; supply
-  `BASE_PRIVATE_KEY` (funded testnet key) to broadcast
-- ~~Real Virtuals ACP client~~ — **done**; supply a Virtuals buyer-agent wallet
-  and key (Python 3.10–3.12) to submit a live job
-- Register and connect one real Virtuals ACP provider agent end to end
-- Broadcast one real Base testnet USDC settlement with a funded key
-- Record a clean, unedited fresh-session demo video (2–5 min)
-
-### Production foundation
-
-- Worker registration and health checks
-- Per-worker wallet and ACP identity configuration
-- Human approval thresholds for high-value work
-- Retry and escalation policies
-- Signed job receipts and audit export
-- Authentication and tenant authorization
-
-### Phase 3: agent reputation network
-
-- Cross-organization reputation with explicit consent
-- Evidence-backed capability claims
-- Reputation decay and dispute workflows
-- Pricing and escrow based on historical performance
-
-## Hackathon positioning
-
-Sibyl Relay is designed for the Sibyl Labs Hackathon's memory gate:
-
-> **Sibyl Relay remembers which agents earned trust, then uses that memory to
-> decide who gets the next job.**
-
-The intended final demo will combine:
-
-- Sibyl Memory for durable worker reputation and job history
-- Virtuals for real agent-to-agent delegation
-- Base for real settlement or x402 payment
-
-Only integrations that are exercised end to end should be claimed in the final
-submission.
+- Register and connect a real Virtuals ACP provider end to end.
+- Broadcast a Base testnet USDC settlement with a funded test key.
+- Add worker registration and health checks.
+- Add human approval thresholds, retries, and escalation policies.
+- Add signed job receipts, audit export, authentication, and tenant authorization.
+- Build cross-organization reputation with explicit consent and evidence-backed capability claims.
 
 ## License
 
-MIT. See `pyproject.toml`.
+MIT. See [LICENSE](LICENSE).

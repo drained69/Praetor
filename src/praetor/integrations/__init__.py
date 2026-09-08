@@ -1,6 +1,6 @@
 """Real partner-stack client implementations.
 
-`sibyl_relay.partners` defines the narrow product boundary (the ``PaymentClient``
+`praetor.partners` defines the narrow product boundary (the ``PaymentClient``
 and ``ACPClient`` protocols). This package supplies concrete clients that speak
 to the real Base chain and the real Virtuals Agent Commerce Protocol.
 

@@ -1,6 +1,6 @@
 """Real Base USDC payment client.
 
-Implements the :class:`sibyl_relay.partners.PaymentClient` protocol against the
+Implements the :class:`praetor.partners.PaymentClient` protocol against the
 live Base chain using ``web3``.
 
 Two honest modes:
@@ -259,5 +259,7 @@ class BaseUSDCClient:
         tx_hash = w3.eth.send_raw_transaction(raw)
         receipt = w3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
         if receipt.get("status") != 1:
-            raise BasePaymentError(f"transfer reverted on-chain: {tx_hash.hex()}")
-        return tx_hash.hex()
+            raise BasePaymentError(f"transfer reverted on-chain: 0x{tx_hash.hex().removeprefix('0x')}")
+        # web3 >=7 returns HexBytes.hex() without the "0x" prefix; explorers
+        # and downstream consumers expect the 0x-prefixed form.
+        return "0x" + tx_hash.hex().removeprefix("0x")

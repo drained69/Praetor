@@ -1,6 +1,6 @@
 """Automatic ``.env`` loading.
 
-Any entry point (server, CLI, or ``python -c "from sibyl_relay ..."``) loads a
+Any entry point (server, CLI, or ``python -c "from praetor ..."``) loads a
 ``.env`` file so credentials never have to be exported by hand. The file is
 found by walking up from the current working directory. Variables already set
 in the real environment are NOT overridden, so an explicit ``export`` still

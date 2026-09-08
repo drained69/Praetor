@@ -1,9 +1,31 @@
+# Python
 .venv/
 .venv-virtuals/
-.env
 __pycache__/
 *.py[cod]
 *.egg-info/
 .pytest_cache/
+build/
+dist/
+
+# Secrets & local memory
+.env
 .relay-memory.db
 memory.db
+*.sibyl-memory/
+
+# Node / Remotion video project
+node_modules/
+video/node_modules/
+video/out/
+
+# Video files
+*.mp4
+*.mov
+*.webm
+*.avi
+*.mkv
+*.wmv
+
+# OS
+.DS_Store

@@ -48,7 +48,7 @@ def deletion_test() -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--db", default=os.getenv("SIBYL_RELAY_DB"))
+    parser.add_argument("--db", default=os.getenv("PRAETOR_DB"))
     parser.add_argument("--deletion-test", action="store_true", help="compare routing with and without persisted memory")
     args = parser.parse_args()
     deletion_test() if args.deletion_test else run(args.db)

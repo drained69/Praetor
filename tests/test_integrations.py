@@ -2,16 +2,16 @@ import os
 
 import pytest
 
-from sibyl_relay.integrations import load_config
-from sibyl_relay.integrations.config import BaseConfig, VirtualsConfig
-from sibyl_relay.integrations.base_payment import BasePaymentError, BaseUSDCClient
-from sibyl_relay.integrations.virtuals_acp import VirtualsACPClient, VirtualsACPError
-from sibyl_relay.integrations.virtuals_cli import (
+from praetor.integrations import load_config
+from praetor.integrations.config import BaseConfig, VirtualsConfig
+from praetor.integrations.base_payment import BasePaymentError, BaseUSDCClient
+from praetor.integrations.virtuals_acp import VirtualsACPClient, VirtualsACPError
+from praetor.integrations.virtuals_cli import (
     VirtualsCLIClient,
     VirtualsCLIConfig,
     VirtualsCLIError,
 )
-from sibyl_relay.partners import VirtualsACPAdapter, _is_live_reference
+from praetor.partners import VirtualsACPAdapter, _is_live_reference
 
 
 def test_base_config_defaults_to_sepolia_usdc(monkeypatch):
@@ -100,7 +100,7 @@ def out(o):
     sys.exit(0)
 
 if args[:2] == ["agent", "whoami"]:
-    out({"id": "agent-1", "name": "Sibyl Relay", "walletAddress": "0xagent"})
+    out({"id": "agent-1", "name": "Praetor", "walletAddress": "0xagent"})
 
 if args[:1] == ["browse"]:
     # emulate: acp browse <keyword> --chain-ids .. --top-k .. --json
@@ -141,7 +141,7 @@ def test_cli_client_status_reports_whoami(fake_acp):
     assert status["configured"] is True
     assert status["backend"] == "acp-cli"
     assert status["agent_wallet"] == "0xagent"
-    assert status["agent_name"] == "Sibyl Relay"
+    assert status["agent_name"] == "Praetor"
     assert status["chain_id"] == 8453
 
 

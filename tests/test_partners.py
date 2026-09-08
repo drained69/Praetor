@@ -1,7 +1,7 @@
-from sibyl_relay.partners import BasePaymentAdapter, VirtualsACPAdapter
-from sibyl_relay.core import Coordinator, Job, JobResult, WorkerProfile
-from sibyl_relay.memory import InMemoryStore
-from sibyl_relay.verification import BasicVerifier
+from praetor.partners import BasePaymentAdapter, VirtualsACPAdapter
+from praetor.core import Coordinator, Job, JobResult, WorkerProfile
+from praetor.memory import InMemoryStore
+from praetor.verification import BasicVerifier
 
 
 def test_base_adapter_returns_live_receipt():

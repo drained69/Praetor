@@ -6,7 +6,7 @@ The local demo can therefore be verified without claiming a fake transaction.
 
 An application can configure either adapter independently, or use both in the
 same workflow: Virtuals can coordinate or delegate the agent job, while Base
-can settle the worker payment. Neither partner is required for Sibyl Relay's
+can settle the worker payment. Neither partner is required for Praetor's
 memory-backed routing.
 """
 
@@ -41,7 +41,7 @@ class BasePaymentAdapter:
         self.client = client
 
     def pay_worker(self, recipient: str, amount_usdc: float, job_id: str) -> PartnerReceipt:
-        reference = self.client.pay(recipient, amount_usdc, f"Sibyl Relay job {job_id}")
+        reference = self.client.pay(recipient, amount_usdc, f"Praetor job {job_id}")
         return PartnerReceipt("base", reference, _is_live_reference(reference))
 
 

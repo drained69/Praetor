@@ -1,6 +1,6 @@
 """Real Virtuals Agent Commerce Protocol (ACP) client.
 
-Implements the :class:`sibyl_relay.partners.ACPClient` protocol against the real
+Implements the :class:`praetor.partners.ACPClient` protocol against the real
 Virtuals ACP network using the official ``virtuals-acp`` SDK.
 
 ``submit_job(agent, task)`` resolves a provider agent (by wallet address or by
@@ -9,7 +9,7 @@ and returns a durable ``acp:<chain>:<onchain_job_id>`` reference that Relay
 persists in its Sibyl Memory completion event.
 
 The ``virtuals-acp`` SDK targets Python 3.10-3.12. Import is deferred so the rest
-of Sibyl Relay runs on any supported interpreter; the client only requires the
+of Praetor runs on any supported interpreter; the client only requires the
 SDK when it is actually used.
 """
 
