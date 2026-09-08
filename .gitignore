@@ -7,9 +7,31 @@ __pycache__/
 .pytest_cache/
 build/
 dist/
+.tox/
+.nox/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+pip-wheel-metadata/
+
+# Local tooling and IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+tmp/
+temp/
 
 # Secrets & local memory
 .env
+.env.*
+!.env.example
 .relay-memory.db
 memory.db
 *.sibyl-memory/
@@ -18,6 +40,18 @@ memory.db
 node_modules/
 video/node_modules/
 video/out/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.npm/
+.parcel-cache/
+.cache/
+
+# Build and deployment output
+.vercel/
+.netlify/
+.railway/
 
 # Video files
 *.mp4
@@ -26,6 +60,11 @@ video/out/
 *.avi
 *.mkv
 *.wmv
+*.flv
+*.m4v
+*.mpeg
+*.mpg
+*.3gp
 
 # OS
 .DS_Store
