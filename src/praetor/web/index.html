@@ -67,7 +67,8 @@
   .env-strip .v{font-family:var(--disp); font-weight:700; font-size:20px; color:var(--ink); line-height:1.2}
   .env-strip .v.gold{color:var(--gold)}
   .env-strip .sub{color:var(--muted); font-size:11.5px; margin-top:5px; word-break:break-all}
-  .env-strip .sub.err{color:var(--danger); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; word-break:normal; cursor:help}
+  .env-strip .sub.err{color:var(--muted); font-style:italic; font-size:11px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; word-break:normal; cursor:help}
 
   .console-intro{max-width:1240px; margin:58px auto 0; padding:0 32px; display:flex;
     align-items:flex-end; justify-content:space-between; gap:24px}
@@ -107,7 +108,7 @@
   main > .card:nth-child(3){border-left:2px solid var(--green2)}   /* Integrate */
   main > .card:nth-child(2){background:rgba(9,22,16,.38)}
 
-  /* §05 integrate a worker — doc styling */
+  /* §03 integrate with Praetor — doc styling */
   .doc-h{font-family:var(--disp); font-weight:700; font-size:13px; letter-spacing:.02em;
     color:var(--ink); margin:22px 0 8px}
   .doc-h:first-of-type{margin-top:8px}
@@ -156,37 +157,24 @@
   input:focus, select:focus{outline:none; border-color:rgba(61,245,160,.55)}
   .row{display:flex; gap:12px}
   .row > div{flex:1; min-width:0}
-  .actions{display:flex; gap:10px; margin-top:14px; flex-wrap:wrap}
 
-  /* tables + feed + trace */
+  /* tables + tags */
   table{width:100%; border-collapse:collapse}
   th, td{text-align:left; padding:10px 8px; border-bottom:1px solid var(--line2); font-size:12.5px; vertical-align:middle}
   th{color:var(--muted); font-weight:600; font-size:10.5px; text-transform:uppercase; letter-spacing:.08em}
   td.n{color:var(--muted); font-family:var(--mono)}
   .mono{font-family:var(--mono); font-size:12px; word-break:break-all}
-  .kv{display:grid; grid-template-columns:130px 1fr; gap:8px 14px; font-size:12.5px}
-  .kv .k{color:var(--muted); text-transform:uppercase; letter-spacing:.06em; font-size:10.5px; padding-top:2px}
   .tag{display:inline-block; font-size:10.5px; padding:2px 9px; border-radius:999px; margin-right:6px; letter-spacing:.05em; text-transform:uppercase}
   .tag.good{background:rgba(61,245,160,.09); color:var(--green); border:1px solid rgba(61,245,160,.35)}
   .tag.bad{background:rgba(255,107,107,.09); color:var(--red); border:1px solid rgba(255,107,107,.35)}
   .tag.warn{background:rgba(231,185,77,.09); color:var(--gold); border:1px solid rgba(231,185,77,.35)}
   .tag.cold{color:var(--muted); border:1px solid var(--line2)}
 
-  .feed{list-style:none; padding:0; margin:0}
-  .feed li{border:1px solid var(--line2); border-radius:12px; padding:12px 14px; margin-bottom:10px;
-    background:var(--panel2); font-size:12.5px;}
-  .feed li .h{display:flex; gap:10px; align-items:center; margin-bottom:6px}
-  .feed li .h b{font-family:var(--disp)}
-  .feed li .h time{margin-left:auto; color:var(--muted); font-size:11px}
-  .feed li .refs{display:flex; gap:14px; flex-wrap:wrap; color:var(--muted); font-size:11.5px}
-  .feed .empty{color:var(--muted); padding:8px 0}
   .note{font-size:12px; color:var(--muted)}
   .empty-state{color:var(--muted); text-align:center; padding:30px 20px; font-size:13px}
   .empty-state b{color:var(--ink); font-family:var(--disp); font-size:15px; display:block; margin-bottom:6px}
   .table-scroll{overflow-x:auto; -webkit-overflow-scrolling:touch}
   .table-scroll table{min-width:720px}
-  .status-line{min-height:18px; margin-top:10px; color:var(--muted); font-size:11.5px}
-  .status-line.error{color:var(--red)}
 
   footer{padding:26px 32px; color:var(--muted); font-size:11.5px; text-align:center; border-top:1px solid var(--line2); overflow-wrap:anywhere}
   footer a{color:var(--muted)} footer a:hover{color:var(--green)}
@@ -210,8 +198,6 @@
     .row{flex-direction:column; gap:0}
     .banner{padding:12px 16px}
     .banner input{width:min(100%, 280px) !important}
-    .feed li .h{align-items:flex-start; flex-wrap:wrap; gap:6px}
-    .feed li .h time{width:100%; margin-left:0}
   }
 </style>
 </head>
@@ -352,14 +338,22 @@ let LAST_HEALTH = null;
 
 function ehtml(s){return String(s ?? '').replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));}
 
-// Collapse a raw multi-line CLI / stack-trace error into one readable line,
-// keeping the full text available on hover. Prevents a Node stack trace from
-// blowing out a status tile.
+// Collapse a raw multi-line CLI / stack-trace error into a short human
+// reason, keeping the full text available on hover. Prefers the pre-colon
+// summary when the error is written like "reason: technical detail…"
+// (e.g. the ACP CLI's "acp CLI is installed but not usable as an agent yet:
+// acp CLI failed (1): file:///…" — we keep just the pre-colon reason).
 function friendlyError(raw, fallback){
   const full = String(raw ?? '').trim();
   if(!full) return {short: fallback || '', full: fallback || ''};
   const first = full.split('\n')[0].replace(/\s+/g,' ').trim();
-  const short = first.length > 110 ? first.slice(0,107) + '…' : first;
+  const colon = first.indexOf(': ');
+  let short;
+  if(colon > 5 && colon <= 90){
+    short = first.slice(0, colon);
+  } else {
+    short = first.length > 70 ? first.slice(0, 67) + '…' : first;
+  }
   return {short, full};
 }
 
@@ -430,7 +424,7 @@ function renderChips(h){
 // ============================================================ WORKERS
 function renderWorkers(workers){
   if(!workers.length){
-    $('worker-list').innerHTML = `<div class="empty-state"><b>No workers registered yet.</b>A worker is an autonomous agent running elsewhere that Praetor can dispatch jobs to. Register your first one via the API — see <a href="#integrate">§05 · Integrate a worker</a> below.</div>`;
+    $('worker-list').innerHTML = `<div class="empty-state"><b>No workers registered yet.</b>A worker is an autonomous agent running elsewhere that Praetor can dispatch jobs to. Register your first one via the API — see <a href="#integrate">§03 · Integrate with Praetor</a> below.</div>`;
     return;
   }
   $('worker-list').innerHTML = `<div class="table-scroll"><table>
