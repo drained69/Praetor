@@ -47,6 +47,27 @@ DEMO_WORKER_WALLET = os.getenv(
 )
 
 
+def _shorten_error(raw: str, *, max_len: int = 140) -> str:
+    """Collapse a multi-line CLI / stack-trace error into one short reason.
+
+    Prefers the text before the first ``": "`` when that looks like a real
+    ``"reason: technical detail"`` split, else truncates hard at ``max_len``.
+    Mirrors the ``friendlyError`` collapser in the operator console so any
+    client that reads ``/api/health`` gets the same clean text without the
+    full JavaScript stack.
+    """
+    if not raw:
+        return ""
+    first = raw.split("\n", 1)[0].strip()
+    first = " ".join(first.split())  # collapse whitespace
+    colon = first.find(": ")
+    if 5 < colon <= 90:
+        return first[:colon]
+    if len(first) > max_len:
+        return first[: max_len - 1] + "…"
+    return first
+
+
 def _seed_workers() -> list[WorkerProfile]:
     """Two risk reviewers so the memory-driven routing is visible."""
     return [
@@ -151,11 +172,22 @@ class Relay:
                 self.base_adapter = BasePaymentAdapter(client)
                 self.base_status = {"configured": True, **client.chain_status()}
             except Exception as exc:  # noqa: BLE001 - report, do not crash the app
-                self.base_status = {"configured": False, "error": str(exc)}
-        # Virtuals ACP: prefer the CLI backend (works with any Virtuals-registered
-        # agent + a whitelisted signer), fall back to the SDK backend (which needs
-        # an ACP v2 smart account deployed on-chain).
-        prefer_cli = os.getenv("VIRTUALS_BACKEND", "auto").lower() != "sdk"
+                self.base_status = {"configured": False, "error": _shorten_error(str(exc))}
+        # Virtuals ACP backend selection.
+        # * ``VIRTUALS_BACKEND=sdk`` — force the SDK path (headless-friendly)
+        # * ``VIRTUALS_BACKEND=cli`` — force the CLI path (needs ``acp configure``)
+        # * ``VIRTUALS_BACKEND=auto`` (default) — auto-detect:
+        #     - SDK first when SDK env vars are present (production containers)
+        #     - CLI first when they're not (local dev with ``acp configure`` run)
+        # The manual fallback still applies if the preferred backend fails.
+        backend = os.getenv("VIRTUALS_BACKEND", "auto").lower()
+        if backend == "sdk":
+            prefer_cli = False
+        elif backend == "cli":
+            prefer_cli = True
+        else:
+            # Auto: SDK-first when env vars are set, CLI-first otherwise.
+            prefer_cli = not cfg.virtuals.enabled
         wired = False
         if prefer_cli:
             try:
@@ -166,8 +198,18 @@ class Relay:
                 self.virtuals_status = cli_client.status()
                 wired = True
             except Exception as exc:  # noqa: BLE001 - CLI not installed / not authed
-                cli_error = str(exc)
-                self.virtuals_status = {"configured": False, "backend": "acp-cli", "error": cli_error}
+                cli_error = _shorten_error(str(exc))
+                self.virtuals_status = {
+                    "configured": False,
+                    "backend": "acp-cli",
+                    "error": cli_error,
+                    "hint": (
+                        "Set VIRTUALS_AGENT_WALLET_ADDRESS + "
+                        "VIRTUALS_WHITELISTED_WALLET_PRIVATE_KEY + VIRTUALS_ENTITY_ID "
+                        "to activate the SDK backend headlessly; or run "
+                        "`acp configure && acp agent use --agent-id <id>` for the CLI backend."
+                    ),
+                }
         if not wired and cfg.virtuals.enabled:
             try:
                 from .integrations import VirtualsACPClient
@@ -189,7 +231,7 @@ class Relay:
                 self.virtuals_status = {
                     "configured": False,
                     "backend": "sdk",
-                    "error": str(exc),
+                    "error": _shorten_error(str(exc)),
                     **({"cli_error": prior.get("error")} if prior.get("error") else {}),
                 }
 
