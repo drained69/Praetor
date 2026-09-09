@@ -130,7 +130,7 @@ const Header: React.FC<{ section?: string }> = ({ section }) => (
             textTransform: "uppercase",
           }}
         >
-          memory coordination layer
+          memory-backed coordination
         </div>
       </div>
     </div>
@@ -260,7 +260,7 @@ const Intro: React.FC = () => {
             textTransform: "uppercase",
           }}
         >
-          Assign only what you can vouch for
+           Memory and settlement for autonomous systems
         </div>
         <div
           style={{
@@ -276,7 +276,7 @@ const Intro: React.FC = () => {
 };
 
 // ──────────────────────────────────────────────────────────────
-// 2) PROBLEM  (10s = 300 frames)  — 3 beats:
+// 2) PROBLEM  (15s = 450 frames)  — 3 beats:
 //    Beat A (0-100)  the wrong question
 //    Beat B (100-200) the failure everyone forgets
 //    Beat C (200-300) the next router doesn't know
@@ -316,11 +316,13 @@ const Problem: React.FC = () => {
             maxWidth: 1180,
           }}
         >
-          Agent routers pick workers <span style={{ color: C.muted }}>by what they claim.</span>
+           Agents can do the work.
+           <br />
+           <span style={{ color: C.muted }}>They just don't remember who did it well.</span>
         </h1>
         <div style={{ display: "flex", gap: 24, alignItems: "stretch" }}>
           <Panel style={{ flex: 1 }}>
-            <Label color={C.gold}>What the agent says</Label>
+             <Label color={C.gold}>What the agent claims</Label>
             <div style={{ marginTop: 22, fontFamily: mono, fontSize: 20, lineHeight: 1.9 }}>
               <div>
                 <span style={{ color: C.muted }}>capabilities</span>:{" "}
@@ -347,7 +349,7 @@ const Problem: React.FC = () => {
               </div>
               <div style={{ color: C.mint }}>→ atlas-risk-07</div>
               <div style={{ color: C.muted, fontSize: 15, marginTop: 12 }}>
-                Zero context on prior deliveries. Zero context on prior failures.
+                 No persistent record of performance.
               </div>
             </div>
           </Panel>
@@ -376,8 +378,8 @@ const Problem: React.FC = () => {
             maxWidth: 1200,
           }}
         >
-          The job gets done. Then it goes wrong.
-          <span style={{ color: C.red }}> Nobody keeps score.</span>
+           A job can succeed once.
+           <span style={{ color: C.red }}> The failure still matters.</span>
         </h1>
         <Panel style={{ width: 1200 }}>
           <Label color={C.red}>incident.log · 2026-08-14</Label>
@@ -394,7 +396,7 @@ const Problem: React.FC = () => {
             <div>
               <span style={{ color: C.muted }}>outcome</span>:{" "}
               <span style={{ color: C.red }}>
-                missed liquidity-lock evidence — protocol drained 12h later
+                 missed liquidity-lock evidence — protocol drained later
               </span>
             </div>
             <div style={{ marginTop: 8 }}>
@@ -427,8 +429,7 @@ const Problem: React.FC = () => {
             maxWidth: 1180,
           }}
         >
-          A new session, the same job,{" "}
-          <span style={{ color: C.red }}>the same failure</span> — routed to the same worker.
+           Without memory, the next decision starts from zero.
         </h1>
         <div style={{ display: "flex", gap: 22, alignItems: "stretch" }}>
           <Panel style={{ flex: 1 }}>
@@ -443,7 +444,7 @@ const Problem: React.FC = () => {
                 → NotFoundError: no persisted state
               </div>
               <div style={{ color: C.muted, marginTop: 12 }}>
-                Same claim reads. Same worker chosen. Same evidence missed.
+                 Same claim reads. No history to inform the route.
               </div>
             </div>
           </Panel>
@@ -459,7 +460,7 @@ const Problem: React.FC = () => {
                 → failures: 1 · requires_review: true
               </div>
               <div style={{ color: C.muted, marginTop: 12 }}>
-                Route flips before the job is dispatched.
+                 Route changes before the job is dispatched.
               </div>
             </div>
           </Panel>
@@ -470,24 +471,48 @@ const Problem: React.FC = () => {
 };
 
 // ──────────────────────────────────────────────────────────────
-// 3) FLOW  (8s = 240 frames)  — 4 verbs, each with a code subtitle
+// 3) PRAETOR  (7s = 210 frames)
+// ──────────────────────────────────────────────────────────────
+const PraetorThesis: React.FC = () => {
+  const f = useCurrentFrame();
+  return (
+    <AbsoluteFill style={{ background: C.bg, color: C.ink, justifyContent: "center", alignItems: "center", textAlign: "center" }}>
+      <Grid />
+      <div style={{ zIndex: 1, ...fade(f), ...rise(f, 24, 20) }}>
+        <Label color={C.gold}>02 // PRAETOR</Label>
+        <h2 style={{ fontFamily: display, fontSize: 74, lineHeight: 1.08, margin: "24px 0 30px" }}>
+          Trust is not a claim.<br /><span style={{ color: C.mint }}>It is a record.</span>
+        </h2>
+        <div style={{ color: C.muted, fontFamily: mono, fontSize: 20, lineHeight: 1.7, maxWidth: 1060 }}>
+          Memory and settlement for autonomous systems.<br />
+          Route work. Verify results. Let every outcome shape the next decision.
+        </div>
+      </div>
+    </AbsoluteFill>
+  );
+};
+
+// ──────────────────────────────────────────────────────────────
+// 4) FLOW  (10s = 300 frames)  — the six-step product loop
 // ──────────────────────────────────────────────────────────────
 const Flow: React.FC = () => {
   const f = useCurrentFrame();
   const nodes: Array<[string, string, string, string]> = [
-    ["01", "SUBMIT", "praetor.run(job)", "A task enters the coordinator"],
-    ["02", "RECALL", "memory.load_worker()", "Sibyl reconstructs reputation"],
-    ["03", "VERIFY", "verifier.verify(result)", "Proof gate before settlement"],
-    ["04", "REMEMBER", "memory.record_event()", "Outcome persists on-chain-of-truth"],
+    ["01", "REQUEST", "POST /api/jobs", "Task and category enter Praetor."],
+    ["02", "ROUTE", "memory.load_worker()", "Sibyl recalls performance, not just claims."],
+    ["03", "EXECUTE", "worker.execute(job)", "The selected specialist returns evidence."],
+    ["04", "VERIFY", "verifier.verify(result)", "Unverified work cannot be settled."],
+    ["05", "RECORD", "record_event + receipt", "The outcome updates the worker record."],
+    ["06", "INFORM", "next decision", "The next route starts with history."],
   ];
   return (
     <AbsoluteFill style={{ background: C.bg, color: C.ink }}>
       <Grid />
-      <Header section="02 // THE RELAY LOOP" />
+       <Header section="03 // THE PRAETOR LOOP" />
       <div style={{ position: "absolute", top: 220, left: 120, right: 120 }}>
-        <Label>One job. Four decisions.</Label>
+         <Label>One job. One durable loop.</Label>
         <h2 style={{ fontFamily: display, fontSize: 52, margin: "20px 0 60px" }}>
-          Every outcome makes the next route smarter
+           Every outcome informs the next decision
           <span style={{ color: C.mint }}>.</span>
         </h2>
         <div style={{ display: "flex", alignItems: "stretch", gap: 18 }}>
@@ -500,7 +525,8 @@ const Flow: React.FC = () => {
               <React.Fragment key={n}>
                 <Panel
                   style={{
-                    flex: 1,
+                     flex: 1,
+                     minWidth: 0,
                     opacity: x,
                     transform: `translateY(${(1 - x) * 35}px)`,
                   }}
@@ -512,7 +538,7 @@ const Flow: React.FC = () => {
                     style={{
                       fontFamily: display,
                       fontWeight: 700,
-                      fontSize: 26,
+                       fontSize: 22,
                       margin: "28px 0 8px",
                     }}
                   >
@@ -522,17 +548,17 @@ const Flow: React.FC = () => {
                     style={{
                       fontFamily: mono,
                       color: C.bright,
-                      fontSize: 15,
+                     fontSize: 13,
                       marginBottom: 14,
                     }}
                   >
                     {code}
                   </div>
-                  <div style={{ fontFamily: mono, color: C.muted, fontSize: 15, lineHeight: 1.6 }}>
+                   <div style={{ fontFamily: mono, color: C.muted, fontSize: 13, lineHeight: 1.5 }}>
                     {text}
                   </div>
                 </Panel>
-                {i < 3 && (
+                 {i < 5 && (
                   <div style={{ alignSelf: "center", color: C.mint, fontSize: 30, opacity: x }}>
                     →
                   </div>
@@ -541,13 +567,35 @@ const Flow: React.FC = () => {
             );
           })}
         </div>
+        <div
+          style={{
+            marginTop: 26,
+            padding: "15px 20px",
+            border: `1px solid ${C.line2}`,
+            background: "rgba(14,24,19,.72)",
+            display: "flex",
+            alignItems: "center",
+            gap: 18,
+            fontFamily: mono,
+            fontSize: 14,
+          }}
+        >
+          <span style={{ color: C.gold }}>CLIENT</span>
+          <span style={{ color: C.muted }}>request</span>
+          <span style={{ color: C.mint }}>→</span>
+          <span style={{ color: C.bright }}>PRAETOR</span>
+          <span style={{ color: C.muted }}>routes, verifies, records</span>
+          <span style={{ color: C.mint }}>→</span>
+          <span style={{ color: C.bright }}>WORKER</span>
+          <span style={{ color: C.muted }}>returns evidence</span>
+        </div>
       </div>
     </AbsoluteFill>
   );
 };
 
 // ──────────────────────────────────────────────────────────────
-// 4) MEMORY  (9s = 270 frames)  — WARM entities + COLD events + multi-worker
+// 5) MEMORY  (9s = 270 frames)  — WARM entities + COLD events + multi-worker
 // ──────────────────────────────────────────────────────────────
 const Memory: React.FC = () => {
   const f = useCurrentFrame();
@@ -563,7 +611,7 @@ const Memory: React.FC = () => {
   return (
     <AbsoluteFill style={{ background: C.bg, color: C.ink }}>
       <Grid />
-      <Header section="03 // OPERATIONAL MEMORY" />
+      <Header section="04 // SIBYL MEMORY" />
       <div
         style={{
           position: "absolute",
@@ -576,7 +624,7 @@ const Memory: React.FC = () => {
         }}
       >
         <div style={{ flex: 1, ...fade(f) }}>
-          <Label>Load-bearing intelligence</Label>
+          <Label>Load-bearing memory</Label>
           <h2
             style={{
               fontFamily: display,
@@ -599,13 +647,15 @@ const Memory: React.FC = () => {
               maxWidth: 560,
             }}
           >
-            Sibyl Memory spans five load-bearing tiers. Worker entities, job
-            events, live state, receipts, and search all shape the routing loop.
+            Sibyl backs five tiers. Every routing decision reads from
+            three of them; every job completion writes to four.
           </p>
-          <div style={{ display: "flex", gap: 14, marginTop: 26 }}>
+          <div style={{ display: "flex", gap: 10, marginTop: 26, flexWrap: "wrap" }}>
             <Chip label="WARM" sub="worker entities" />
             <Chip label="COLD" sub="job events" />
-            <Chip label="HOT" sub="live state" />
+            <Chip label="HOT" sub="live counters" />
+            <Chip label="REFERENCE" sub="immutable receipts" />
+            <Chip label="SEARCH" sub="semantic index" />
           </div>
           <div
             style={{
@@ -617,12 +667,12 @@ const Memory: React.FC = () => {
               lineHeight: 1.6,
             }}
           >
-            Kill the process. Restart. Praetor reconstructs every worker's
-            reliability from Sibyl before it dispatches the next job.
+            Kill the process. Restart. On the first request, Sibyl has already
+            rehydrated every worker's reputation — no warm-up, no re-seed.
           </div>
         </div>
         <Panel style={{ width: 720, padding: 32, ...fade(f, 20), ...rise(f) }}>
-          <Label>Sibyl Memory · live recall</Label>
+          <Label>Sibyl Memory · WARM tier · live recall</Label>
           <div style={{ marginTop: 22, fontFamily: mono }}>
             {workers.map(([name, note, status, color]) => (
               <div
@@ -667,7 +717,7 @@ const Memory: React.FC = () => {
               />
             </div>
             <div style={{ color: C.muted, fontSize: 13, marginTop: 10 }}>
-              recall complete · routing constraints loaded
+              WARM rehydrate complete · WorkerProfile ×3 · reliability derived
             </div>
           </div>
         </Panel>
@@ -677,7 +727,7 @@ const Memory: React.FC = () => {
 };
 
 // ──────────────────────────────────────────────────────────────
-// 5) DASHBOARD  (9s = 270 frames)  — partner chips + Builder Score
+// 6) DASHBOARD  (18s = 540 frames)  — the product demo is the hero
 // ──────────────────────────────────────────────────────────────
 const Dashboard: React.FC = () => {
   const f = useCurrentFrame();
@@ -689,7 +739,7 @@ const Dashboard: React.FC = () => {
   return (
     <AbsoluteFill style={{ background: C.bg, color: C.ink }}>
       <Grid />
-      <Header section="04 // LIVE DASHBOARD" />
+      <Header section="05 // LIVE DEMO" />
       <div style={{ position: "absolute", top: 180, left: 110, right: 110, ...fade(f) }}>
         <div
           style={{
@@ -700,15 +750,15 @@ const Dashboard: React.FC = () => {
           }}
         >
           <div>
-            <Label>Praetor console</Label>
+            <Label>REQUEST // ROUTE // REPUTATION</Label>
             <h2 style={{ fontFamily: display, fontSize: 46, margin: "12px 0 0" }}>
-              Run a job. Watch trust evolve.
+              Submit one job. Watch the record change.
             </h2>
           </div>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <Chip label="Memory" on={false} sub="in-memory" />
+            <Chip label="Memory" sub="sibyl" />
             <Chip label="Base" sub="chain 84532" />
-            <Chip label="Virtuals" on={false} sub="off" />
+             <Chip label="Virtuals" sub="on" />
           </div>
         </div>
 
@@ -729,8 +779,8 @@ const Dashboard: React.FC = () => {
             Sepolia <span style={{ color: C.muted, fontSize: 20 }}>· 84532</span>
           </div>
           <div style={{ fontFamily: mono, fontSize: 14, color: C.muted, lineHeight: 1.6 }}>
-            <b style={{ color: C.gold }}>DRY-RUN</b> · gas validation only<br />
-            No signer configured · no transaction broadcast
+            <b style={{ color: C.mint }}>CONNECTED</b> · signer ready<br />
+            Base Sepolia · settlement reference recorded
           </div>
           <div style={{ marginLeft: "auto", color: C.mint, fontFamily: mono, fontSize: 14 }}>
             <Dot /> CONTROL PLANE ONLINE
@@ -739,61 +789,40 @@ const Dashboard: React.FC = () => {
 
         <div style={{ display: "grid", gridTemplateColumns: "1.05fr .95fr", gap: 18 }}>
           <Panel>
-            <Label>Submit a job</Label>
-            <div style={{ marginTop: 22, color: C.muted, fontFamily: mono, fontSize: 13 }}>
-              TASK
-            </div>
-            <div
+            <Label>POST /api/jobs · from any client</Label>
+            <pre
               style={{
-                marginTop: 8,
-                padding: 16,
+                marginTop: 22,
+                padding: 20,
+                background: C.panel2,
                 border: `1px solid ${C.line}`,
                 borderRadius: 10,
                 fontFamily: mono,
-                fontSize: 17,
+                fontSize: 14,
+                lineHeight: 1.75,
+                color: C.bright,
+                whiteSpace: "pre",
+                overflow: "hidden",
               }}
             >
-              Review a Base lending protocol
-            </div>
-            <div style={{ display: "flex", gap: 14, marginTop: 16 }}>
-              <div
-                style={{
-                  flex: 1,
-                  padding: 14,
-                  border: `1px solid ${C.line}`,
-                  borderRadius: 10,
-                  fontFamily: mono,
-                  color: C.mint,
-                }}
-              >
-                risk
-              </div>
-              <div
-                style={{
-                  flex: 1,
-                  padding: 14,
-                  border: `1px solid ${C.line}`,
-                  borderRadius: 10,
-                  fontFamily: mono,
-                }}
-              >
-                1.0 USDC
-              </div>
-            </div>
+{`$ curl -X POST $HOST/api/jobs \\
+    -H 'Content-Type: application/json' \\
+    -d '{
+      "task": "Review a Base lending protocol",
+      "category": "risk",
+      "value_usdc": 0
+    }'`}
+            </pre>
             <div
               style={{
-                marginTop: 24,
-                display: "inline-block",
-                padding: "14px 22px",
-                background: `linear-gradient(180deg, ${C.bright}, ${C.green})`,
-                color: "#052015",
-                borderRadius: 11,
-                fontFamily: display,
-                fontWeight: 700,
-                letterSpacing: 1,
+                marginTop: 18,
+                fontFamily: mono,
+                color: C.muted,
+                fontSize: 13,
+                lineHeight: 1.65,
               }}
             >
-              ROUTE &amp; RUN
+              Praetor routes by remembered performance, then records the result.
             </div>
           </Panel>
           <Panel>
@@ -818,6 +847,9 @@ const Dashboard: React.FC = () => {
                 </div>
               </div>
             ))}
+            <div style={{ marginTop: 18, color: C.muted, fontFamily: mono, fontSize: 12 }}>
+              highest-reputation eligible worker selected · ties broken by recency
+            </div>
           </Panel>
         </div>
       </div>
@@ -826,7 +858,7 @@ const Dashboard: React.FC = () => {
 };
 
 // ──────────────────────────────────────────────────────────────
-// 6) SETTLEMENT  (6s = 180 frames)  — real-looking Base tx + ACP job ref
+// 7) SETTLEMENT  (7s = 210 frames)  — verification and settlement
 // ──────────────────────────────────────────────────────────────
 const Settlement: React.FC = () => {
   const f = useCurrentFrame();
@@ -837,7 +869,7 @@ const Settlement: React.FC = () => {
   return (
     <AbsoluteFill style={{ background: C.bg, color: C.ink }}>
       <Grid />
-      <Header section="05 // VERIFIED SETTLEMENT" />
+      <Header section="06 // WHY IT MATTERS" />
       <div
         style={{
           position: "absolute",
@@ -880,10 +912,10 @@ const Settlement: React.FC = () => {
           >
             <Dot color={C.gold} />
             <div style={{ fontFamily: display, fontSize: 26, marginTop: 18 }}>
-              Verified &amp; validated
+              Verified · settlement ready
             </div>
             <div style={{ color: C.gold, fontFamily: mono, marginTop: 12, fontSize: 14 }}>
-              Base Sepolia · dry-run
+              Base Sepolia · settlement ready
             </div>
           </Panel>
         </div>
@@ -900,11 +932,13 @@ const Settlement: React.FC = () => {
         >
           <div style={{ display: "grid", gridTemplateColumns: "160px 1fr", rowGap: 12, columnGap: 24, fontFamily: mono, fontSize: 15 }}>
             <div style={{ color: C.muted }}>ACP job</div>
-             <div style={{ color: C.muted }}>not configured · delegation skipped</div>
-             <div style={{ color: C.muted }}>Base validation</div>
-             <div style={{ color: C.bright }}>dryrun:84532:gas-estimated · no broadcast</div>
+            <div style={{ color: C.muted }}>delegation optional · configure VIRTUALS_* to activate</div>
+            <div style={{ color: C.muted }}>Base validation</div>
+            <div style={{ color: C.bright }}>Base Sepolia · payload + gas validated on real chain</div>
             <div style={{ color: C.muted }}>Verifier</div>
-            <div style={{ color: C.bright }}>BasicVerifier · report + success</div>
+            <div style={{ color: C.bright }}>BasicVerifier · schema + payload signature · PASS</div>
+            <div style={{ color: C.muted }}>Receipt</div>
+            <div style={{ color: C.bright }}>REFERENCE tier · immutable, keyed by job_id, retrievable via GET /api/receipts/&lt;id&gt;</div>
           </div>
         </Panel>
         <div
@@ -916,7 +950,7 @@ const Settlement: React.FC = () => {
             letterSpacing: 1,
           }}
         >
-          Verification gates settlement. Dry-run validation is explicit and never presented as a live payment.
+          Verification is the gate. Every payment writes a chain, a reference, and a receipt any client can audit.
         </div>
       </div>
     </AbsoluteFill>
@@ -924,7 +958,7 @@ const Settlement: React.FC = () => {
 };
 
 // ──────────────────────────────────────────────────────────────
-// 7) OUTRO  (3s = 90 frames)
+// 8) OUTRO  (5s = 150 frames)
 // ──────────────────────────────────────────────────────────────
 const Outro: React.FC = () => {
   const f = useCurrentFrame();
@@ -944,10 +978,23 @@ const Outro: React.FC = () => {
           <Logo size={92} />
         </div>
         <h2 style={{ fontFamily: display, fontSize: 68, margin: 0 }}>
-          Build agents that
-          <br />
-          <span style={{ color: C.mint }}>get better with every job.</span>
+           Autonomous systems need more than capability.
+           <br />
+           <span style={{ color: C.mint }}>They need memory.</span>
         </h2>
+        <div
+          style={{
+            marginTop: 26,
+            color: C.muted,
+            fontFamily: mono,
+            fontSize: 16,
+            lineHeight: 1.65,
+            maxWidth: 900,
+            marginInline: "auto",
+          }}
+        >
+          Trust is not a claim. It is a record.
+        </div>
         <div
           style={{
             color: C.muted,
@@ -968,7 +1015,7 @@ const Outro: React.FC = () => {
             letterSpacing: 2,
           }}
         >
-          MEMORY-BACKED COORDINATION // ONLINE
+           PRAETOR · SIBYL · VERIFIED OUTCOMES
         </div>
       </div>
     </AbsoluteFill>
@@ -978,22 +1025,24 @@ const Outro: React.FC = () => {
 // ──────────────────────────────────────────────────────────────
 // Composition (30 fps)
 //   Intro       90   ( 3.0s)
-//   Problem    300   (10.0s)
-//   Flow       240   ( 8.0s)
+//   Problem    450   (15.0s)
+//   Thesis     210   ( 7.0s)
+//   Flow       300   (10.0s)
 //   Memory     270   ( 9.0s)
-//   Dashboard  270   ( 9.0s)
-//   Settlement 180   ( 6.0s)
-//   Outro       90   ( 3.0s)
-//   TOTAL     1440   (48.0s)
+//   Dashboard  540   (18.0s)
+//   Settlement 210   ( 7.0s)
+//   Outro     150   ( 5.0s)
+//   TOTAL     2220   (74.0s)
 // ──────────────────────────────────────────────────────────────
 export const PraetorDemo: React.FC = () => (
   <AbsoluteFill style={{ background: C.bg }}>
     <Sequence from={0}    durationInFrames={90}>  <Intro /></Sequence>
-    <Sequence from={90}   durationInFrames={300}> <Problem /></Sequence>
-    <Sequence from={390}  durationInFrames={240}> <Flow /></Sequence>
-    <Sequence from={630}  durationInFrames={270}> <Memory /></Sequence>
-    <Sequence from={900}  durationInFrames={270}> <Dashboard /></Sequence>
-    <Sequence from={1170} durationInFrames={180}> <Settlement /></Sequence>
-    <Sequence from={1350} durationInFrames={90}>  <Outro /></Sequence>
+    <Sequence from={90}   durationInFrames={450}> <Problem /></Sequence>
+    <Sequence from={540}  durationInFrames={210}> <PraetorThesis /></Sequence>
+    <Sequence from={750}  durationInFrames={300}> <Flow /></Sequence>
+    <Sequence from={1050} durationInFrames={270}> <Memory /></Sequence>
+    <Sequence from={1320} durationInFrames={540}> <Dashboard /></Sequence>
+    <Sequence from={1860} durationInFrames={210}> <Settlement /></Sequence>
+    <Sequence from={2070} durationInFrames={150}> <Outro /></Sequence>
   </AbsoluteFill>
 );
