@@ -210,20 +210,27 @@ class Relay:
                         "`acp configure && acp agent use --agent-id <id>` for the CLI backend."
                     ),
                 }
-        if not wired and cfg.virtuals.enabled:
+        # An explicit ``VIRTUALS_BACKEND=cli`` pins the backend — never fall back
+        # to the SDK, so the CLI's failure reason is what the operator sees.
+        if not wired and cfg.virtuals.enabled and backend != "cli":
             try:
                 from .integrations import VirtualsACPClient
 
                 vclient = VirtualsACPClient(cfg.virtuals)
-                self.virtuals_adapter = VirtualsACPAdapter(vclient)
                 try:
                     self.virtuals_status = {"configured": True, "backend": "sdk", **vclient.verify()}
+                    # Do not expose an adapter that has not passed the SDK's
+                    # on-chain signer/account validation. A failed health
+                    # probe must not turn the first job into a misleading
+                    # execution failure.
+                    self.virtuals_adapter = VirtualsACPAdapter(vclient)
                 except Exception as exc:  # noqa: BLE001 - constructed, not yet verifiable
                     self.virtuals_status = {
                         **vclient.status(),
+                        "configured": False,
                         "backend": "sdk",
                         "verified_onchain": False,
-                        "error": str(exc),
+                        "error": _shorten_error(str(exc)),
                     }
             except Exception as exc:  # noqa: BLE001
                 # Preserve any prior CLI error while surfacing the SDK reason too.
