@@ -24,6 +24,12 @@ COPY pyproject.toml README.md LICENSE ./
 COPY src ./src
 RUN pip install --upgrade pip && pip install ".[server,virtuals]" sibyl-memory-client
 
+# Startup script: rebuild the acp CLI's on-disk state from env vars so the
+# CLI backend works headlessly on Railway. No-op if the env vars are unset.
+COPY scripts/materialize-acp-state.sh /usr/local/bin/materialize-acp-state.sh
+RUN chmod +x /usr/local/bin/materialize-acp-state.sh
+
 # Railway provides $PORT at runtime; the server reads it (defaults to 8000).
 EXPOSE 8000
+ENTRYPOINT ["/usr/local/bin/materialize-acp-state.sh"]
 CMD ["praetor-server"]
