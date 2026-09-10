@@ -97,6 +97,13 @@ def test_deletion_test_is_load_bearing(client):
     assert body["with_memory_selected"] != body["without_memory_selected"]
 
 
+def test_deletion_test_also_reachable_via_get(client):
+    """Judges hit the URL in a browser — GET must return the same JSON."""
+    body = client.get("/api/deletion-test").json()
+    assert body["load_bearing"] is True
+    assert body["with_memory_selected"] != body["without_memory_selected"]
+
+
 def test_unknown_category_is_rejected(client):
     r = client.post("/api/jobs", json={"category": "unknown"})
     assert r.status_code == 400
