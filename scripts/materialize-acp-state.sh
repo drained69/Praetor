@@ -21,6 +21,13 @@ set -eu
 CONFIG_DIR="${ACP_CONFIG_DIR:-$HOME/.config/acp}"
 SIGNER_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/acp-cli"
 
+# Force the cross-keychain library used by the acp CLI to pick the file
+# backend on every process start. Without this, each new invocation re-runs
+# backend auto-detection and may resolve to a different backend than the
+# one that wrote the secrets (Railway has no D-Bus / gnome-keyring), so
+# whoami / job commands see an empty keyring and report "Not authenticated".
+export TS_KEYRING_BACKEND="${TS_KEYRING_BACKEND:-file}"
+
 if [ -n "${ACP_STATE_CONFIG_B64:-}" ]; then
     mkdir -p "$CONFIG_DIR"
     printf '%s' "$ACP_STATE_CONFIG_B64" | base64 -d > "$CONFIG_DIR/config.json"
