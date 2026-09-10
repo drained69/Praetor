@@ -43,12 +43,32 @@ class VirtualsACPClient:
     def _build(self):
         if self._acp is not None:
             return
-        try:
-            from virtuals_acp.client import (
-                BASE_MAINNET_CONFIG,
-                BASE_SEPOLIA_CONFIG,
-                VirtualsACP,
+        private_key = self.config.private_key.removeprefix("0x")
+        if len(private_key) != 64:
+            raise VirtualsACPError(
+                "VIRTUALS_WHITELISTED_WALLET_PRIVATE_KEY must be a 32-byte EVM "
+                "private key in hex format (64 hex characters, optionally prefixed 0x)."
             )
+        try:
+            int(private_key, 16)
+        except ValueError as exc:
+            raise VirtualsACPError(
+                "VIRTUALS_WHITELISTED_WALLET_PRIVATE_KEY contains non-hex characters; "
+                "provide the whitelisted EVM signer key, not a PEM key."
+            ) from exc
+        sdk_config_names = {
+            8453: "BASE_MAINNET_CONFIG_V2",
+            84532: "BASE_SEPOLIA_CONFIG_V2",
+        }
+        config_name = sdk_config_names.get(self.config.chain_id)
+        if config_name is None:
+            raise VirtualsACPError(
+                f"Virtuals ACP does not support chain {self.config.chain_id}; "
+                "use Base mainnet (8453) or Base Sepolia (84532)."
+            )
+        try:
+            from virtuals_acp.client import VirtualsACP
+            from virtuals_acp.configs import configs as sdk_configs
             from virtuals_acp.contract_clients.contract_client_v2 import ACPContractClientV2
         except ImportError as exc:  # pragma: no cover - env-dependent
             raise VirtualsACPError(
@@ -59,7 +79,7 @@ class VirtualsACPClient:
         # The SDK also reads the signing key from the environment.
         os.environ.setdefault("WHITELISTED_WALLET_PRIVATE_KEY", self.config.private_key)
 
-        self._config_obj = BASE_MAINNET_CONFIG if self.config.chain_id == 8453 else BASE_SEPOLIA_CONFIG
+        self._config_obj = getattr(sdk_configs, config_name)
         try:
             contract_client = ACPContractClientV2(
                 agent_wallet_address=self.config.agent_wallet_address,

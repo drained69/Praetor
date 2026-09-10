@@ -35,6 +35,15 @@ def _env(*names: str, default: str | None = None) -> str | None:
     return default
 
 
+def _int_env(name: str, *, default: int) -> int:
+    """Parse an integer setting without allowing a bad optional value to crash startup."""
+    raw = _env(name, default=str(default))
+    try:
+        return int(raw or default)
+    except (TypeError, ValueError):
+        return default
+
+
 @dataclass(frozen=True)
 class BaseConfig:
     """Configuration for the Base USDC payment client."""
@@ -46,7 +55,7 @@ class BaseConfig:
 
     @classmethod
     def from_env(cls) -> "BaseConfig":
-        chain_id = int(_env("BASE_CHAIN_ID", default="84532"))
+        chain_id = _int_env("BASE_CHAIN_ID", default=84532)
         rpc_url = _env("BASE_RPC_URL", default=DEFAULT_RPC_BY_CHAIN.get(chain_id, ""))
         private_key = _env("BASE_PRIVATE_KEY", "BASE_WALLET_PRIVATE_KEY", default="") or ""
         usdc = _env("BASE_USDC_ADDRESS", default=USDC_ADDRESS_BY_CHAIN.get(chain_id, "")) or ""
@@ -79,7 +88,6 @@ class VirtualsConfig:
 
     @classmethod
     def from_env(cls) -> "VirtualsConfig":
-        entity_raw = _env("VIRTUALS_ENTITY_ID", "BUYER_ENTITY_ID", default="0") or "0"
         return cls(
             agent_wallet_address=_env(
                 "VIRTUALS_AGENT_WALLET_ADDRESS", "BUYER_AGENT_WALLET_ADDRESS", default=""
@@ -91,15 +99,15 @@ class VirtualsConfig:
                 default="",
             )
             or "",
-            entity_id=int(entity_raw),
-            chain_id=int(_env("VIRTUALS_CHAIN_ID", default="84532")),
+            entity_id=_int_env("VIRTUALS_ENTITY_ID", default=0),
+            chain_id=_int_env("VIRTUALS_CHAIN_ID", default=84532),
             rpc_url=_env("VIRTUALS_RPC_URL", "BASE_RPC_URL", default="") or "",
             evaluator_address=_env("VIRTUALS_EVALUATOR_ADDRESS", default="") or "",
         )
 
     @property
     def enabled(self) -> bool:
-        return bool(self.agent_wallet_address and self.private_key)
+        return bool(self.agent_wallet_address and self.private_key and self.entity_id > 0)
 
 
 @dataclass(frozen=True)

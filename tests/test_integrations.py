@@ -44,6 +44,31 @@ def test_virtuals_client_refuses_when_unconfigured():
         VirtualsACPClient(VirtualsConfig())
 
 
+def test_virtuals_client_rejects_non_evm_signing_key():
+    client = VirtualsACPClient(
+        VirtualsConfig(
+            agent_wallet_address="0x" + "ab" * 20,
+            private_key="-----BEGIN PRIVATE KEY-----",
+            entity_id=1,
+        )
+    )
+    with pytest.raises(VirtualsACPError, match="32-byte EVM"):
+        client._build()
+
+
+def test_virtuals_client_rejects_unsupported_chain_before_sdk_startup():
+    client = VirtualsACPClient(
+        VirtualsConfig(
+            agent_wallet_address="0x" + "ab" * 20,
+            private_key="0x" + "12" * 32,
+            entity_id=1,
+            chain_id=1,
+        )
+    )
+    with pytest.raises(VirtualsACPError, match="does not support chain 1"):
+        client._build()
+
+
 def test_dryrun_reference_is_not_live():
     assert _is_live_reference("dryrun:base:84532:blk1:gas1:0xabc:1000000") is False
     assert _is_live_reference("0x" + "ab" * 32) is True
