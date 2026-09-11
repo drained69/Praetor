@@ -36,10 +36,8 @@ temp/
 memory.db
 *.sibyl-memory/
 
-# Node / Remotion video project
+# Node tooling
 node_modules/
-video/node_modules/
-video/out/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -52,19 +50,6 @@ pnpm-debug.log*
 .vercel/
 .netlify/
 .railway/
-
-# Video files
-*.mp4
-*.mov
-*.webm
-*.avi
-*.mkv
-*.wmv
-*.flv
-*.m4v
-*.mpeg
-*.mpg
-*.3gp
 
 # OS
 .DS_Store
